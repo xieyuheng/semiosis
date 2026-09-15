@@ -18,8 +18,11 @@ export async function chatReply(
   llmChat: LlmChat,
 ): Promise<string> {
   const userMessage: LlmMessage = { role: "user", content: input }
-  const response = await llmChat([...state.messages, userMessage])
+  const response = await llmChat({
+    messages: [...state.messages, userMessage],
+    tools: [],
+  })
   state.messages.push(userMessage)
-  state.messages.push({ role: "assistant", content: response.content })
-  return response.content
+  state.messages.push(response.message)
+  return response.message.content
 }

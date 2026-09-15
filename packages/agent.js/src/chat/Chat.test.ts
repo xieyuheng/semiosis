@@ -5,9 +5,14 @@ import { chatReply, chatStateClear, makeChatState } from "./Chat.ts"
 
 test("chatReply appends user and assistant messages", async () => {
   const state = makeChatState()
-  const llmChat: LlmChat = async (messages) => {
-    assert.deepStrictEqual(messages, [{ role: "user", content: "hello" }])
-    return { content: "hi" }
+  const llmChat: LlmChat = async (request) => {
+    assert.deepStrictEqual(request.messages, [
+      { role: "user", content: "hello" },
+    ])
+    assert.deepStrictEqual(request.tools, [])
+    return {
+      message: { role: "assistant", content: "hi", toolCalls: [] },
+    }
   }
 
   const content = await chatReply(state, "hello", llmChat)
@@ -15,20 +20,26 @@ test("chatReply appends user and assistant messages", async () => {
   assert.strictEqual(content, "hi")
   assert.deepStrictEqual(state.messages, [
     { role: "user", content: "hello" },
-    { role: "assistant", content: "hi" },
+    { role: "assistant", content: "hi", toolCalls: [] },
   ])
 })
 
 test("chatReply keeps history across turns", async () => {
   const state = makeChatState()
-  const llmChat: LlmChat = async (messages) => {
-    if (messages.length === 1) return { content: "hi" }
-    assert.deepStrictEqual(messages, [
+  const llmChat: LlmChat = async (request) => {
+    if (request.messages.length === 1) {
+      return {
+        message: { role: "assistant", content: "hi", toolCalls: [] },
+      }
+    }
+    assert.deepStrictEqual(request.messages, [
       { role: "user", content: "hello" },
-      { role: "assistant", content: "hi" },
+      { role: "assistant", content: "hi", toolCalls: [] },
       { role: "user", content: "again" },
     ])
-    return { content: "yes" }
+    return {
+      message: { role: "assistant", content: "yes", toolCalls: [] },
+    }
   }
 
   await chatReply(state, "hello", llmChat)
@@ -37,9 +48,9 @@ test("chatReply keeps history across turns", async () => {
   assert.strictEqual(content, "yes")
   assert.deepStrictEqual(state.messages, [
     { role: "user", content: "hello" },
-    { role: "assistant", content: "hi" },
+    { role: "assistant", content: "hi", toolCalls: [] },
     { role: "user", content: "again" },
-    { role: "assistant", content: "yes" },
+    { role: "assistant", content: "yes", toolCalls: [] },
   ])
 })
 
@@ -47,7 +58,7 @@ test("chatStateClear clears history", () => {
   const state = makeChatState()
   state.messages.push(
     { role: "user", content: "hello" },
-    { role: "assistant", content: "hi" },
+    { role: "assistant", content: "hi", toolCalls: [] },
   )
 
   chatStateClear(state)

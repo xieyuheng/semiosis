@@ -1,5 +1,13 @@
 import OpenAI from "openai"
-import type { LlmChat, LlmConfig, LlmMessage } from "./Llm.ts"
+import type {
+  LlmAssistantMessage,
+  LlmChat,
+  LlmConfig,
+  LlmMessage,
+  LlmRequest,
+  LlmToolCall,
+  LlmToolSpec,
+} from "./Llm.ts"
 
 export function makeOpenAiLlmChat(config: LlmConfig): LlmChat {
   const client = new OpenAI({
@@ -7,10 +15,12 @@ export function makeOpenAiLlmChat(config: LlmConfig): LlmChat {
     baseURL: config.baseUrl,
   })
 
-  return async (messages: Array<LlmMessage>) => {
+  return async (request: LlmRequest) => {
+    const tools = request.tools.map(makeOpenAiTool)
     const response = await client.chat.completions.create({
       model: config.model,
-      messages: messages.map(makeOpenAiMessage),
+      messages: request.messages.map(makeOpenAiMessage),
+      ...(tools.length === 0 ? {} : { tools }),
       reasoning_effort: "none",
     })
 
@@ -19,12 +29,7 @@ export function makeOpenAiLlmChat(config: LlmConfig): LlmChat {
       throw new Error("[makeOpenAiLlmChat] response.choices is empty")
     }
 
-    const content = choice.message.content
-    if (content === null) {
-      throw new Error("[makeOpenAiLlmChat] response message content is null")
-    }
-
-    return { content }
+    return { message: makeLlmAssistantMessage(choice.message) }
   }
 }
 
@@ -36,7 +41,64 @@ function makeOpenAiMessage(
       return { role: "system", content: message.content }
     case "user":
       return { role: "user", content: message.content }
-    case "assistant":
-      return { role: "assistant", content: message.content }
+    case "assistant": {
+      if (message.toolCalls.length === 0) {
+        return { role: "assistant", content: message.content }
+      }
+      return {
+        role: "assistant",
+        content: message.content,
+        tool_calls: message.toolCalls.map(makeOpenAiToolCall),
+      }
+    }
+    case "tool":
+      return {
+        role: "tool",
+        tool_call_id: message.toolCallId,
+        content: message.content,
+      }
+  }
+}
+
+function makeOpenAiTool(tool: LlmToolSpec): OpenAI.Chat.ChatCompletionTool {
+  return {
+    type: "function",
+    function: {
+      name: tool.name,
+      description: tool.description,
+      parameters: tool.parameters,
+    },
+  }
+}
+
+function makeOpenAiToolCall(
+  toolCall: LlmToolCall,
+): OpenAI.Chat.ChatCompletionMessageFunctionToolCall {
+  return {
+    id: toolCall.id,
+    type: "function",
+    function: {
+      name: toolCall.name,
+      arguments: toolCall.arguments,
+    },
+  }
+}
+
+function makeLlmAssistantMessage(
+  message: OpenAI.Chat.ChatCompletionMessage,
+): LlmAssistantMessage {
+  const toolCalls =
+    message.tool_calls
+      ?.filter((toolCall) => toolCall.type === "function")
+      .map((toolCall) => ({
+        id: toolCall.id,
+        name: toolCall.function.name,
+        arguments: toolCall.function.arguments,
+      })) ?? []
+
+  return {
+    role: "assistant",
+    content: message.content ?? "",
+    toolCalls,
   }
 }
