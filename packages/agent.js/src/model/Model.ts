@@ -49,8 +49,12 @@ export type ModelRequest = {
   tools: Array<ModelToolSpec>
 }
 
+export type ModelInterpret = (request: ModelRequest) => Promise<ModelResponse>
+
 export type ModelResponse = {
   message: ModelAssistantMessage
 }
 
-export type ModelChat = (request: ModelRequest) => Promise<ModelResponse>
+export type Model = {
+  interpret: ModelInterpret
+}

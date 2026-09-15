@@ -1,2 +1,2 @@
 export * from "./Model.ts"
-export * from "./makeOpenAiModelChat.ts"
+export * from "./makeOpenAiModel.ts"

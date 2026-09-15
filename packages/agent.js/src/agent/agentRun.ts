@@ -21,7 +21,7 @@ export async function* agentRun(
     }
 
     step += 1
-    const response = await options.modelChat({
+    const response = await options.model.interpret({
       messages: state.messages,
       tools: options.tools.map((tool) => tool.spec),
     })

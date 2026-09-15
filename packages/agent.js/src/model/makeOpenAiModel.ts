@@ -1,7 +1,7 @@
 import OpenAI from "openai"
 import type {
   ModelAssistantMessage,
-  ModelChat,
+  Model,
   ModelConfig,
   ModelMessage,
   ModelRequest,
@@ -9,27 +9,29 @@ import type {
   ModelToolSpec,
 } from "./Model.ts"
 
-export function makeOpenAiModelChat(config: ModelConfig): ModelChat {
+export function makeOpenAiModel(config: ModelConfig): Model {
   const client = new OpenAI({
     apiKey: config.apiKey,
     baseURL: config.baseUrl,
   })
 
-  return async (request: ModelRequest) => {
-    const tools = request.tools.map(makeOpenAiTool)
-    const response = await client.chat.completions.create({
-      model: config.model,
-      messages: request.messages.map(makeOpenAiMessage),
-      ...(tools.length === 0 ? {} : { tools }),
-      reasoning_effort: "none",
-    })
+  return {
+    interpret: async (request: ModelRequest) => {
+      const tools = request.tools.map(makeOpenAiTool)
+      const response = await client.chat.completions.create({
+        model: config.model,
+        messages: request.messages.map(makeOpenAiMessage),
+        ...(tools.length === 0 ? {} : { tools }),
+        reasoning_effort: "none",
+      })
 
-    const choice = response.choices[0]
-    if (choice === undefined) {
-      throw new Error("[makeOpenAiModelChat] response.choices is empty")
-    }
+      const choice = response.choices[0]
+      if (choice === undefined) {
+        throw new Error("[makeOpenAiModel] response.choices is empty")
+      }
 
-    return { message: makeModelAssistantMessage(choice.message) }
+      return { message: makeModelAssistantMessage(choice.message) }
+    },
   }
 }
 

@@ -1,4 +1,4 @@
-import type { ModelChat, ModelMessage, ModelToolCall } from "../model/Model.ts"
+import type { Model, ModelMessage, ModelToolCall } from "../model/Model.ts"
 import type { Tool } from "../tool/Tool.ts"
 
 export type AgentState = {
@@ -6,7 +6,7 @@ export type AgentState = {
 }
 
 export type AgentOptions = {
-  modelChat: ModelChat
+  model: Model
   tools: Array<Tool>
   maxSteps: number
 }
