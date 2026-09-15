@@ -1,21 +1,21 @@
 import OpenAI from "openai"
 import type {
-  LlmAssistantMessage,
-  LlmChat,
-  LlmConfig,
-  LlmMessage,
-  LlmRequest,
-  LlmToolCall,
-  LlmToolSpec,
-} from "./Llm.ts"
+  ModelAssistantMessage,
+  ModelChat,
+  ModelConfig,
+  ModelMessage,
+  ModelRequest,
+  ModelToolCall,
+  ModelToolSpec,
+} from "./Model.ts"
 
-export function makeOpenAiLlmChat(config: LlmConfig): LlmChat {
+export function makeOpenAiModelChat(config: ModelConfig): ModelChat {
   const client = new OpenAI({
     apiKey: config.apiKey,
     baseURL: config.baseUrl,
   })
 
-  return async (request: LlmRequest) => {
+  return async (request: ModelRequest) => {
     const tools = request.tools.map(makeOpenAiTool)
     const response = await client.chat.completions.create({
       model: config.model,
@@ -26,15 +26,15 @@ export function makeOpenAiLlmChat(config: LlmConfig): LlmChat {
 
     const choice = response.choices[0]
     if (choice === undefined) {
-      throw new Error("[makeOpenAiLlmChat] response.choices is empty")
+      throw new Error("[makeOpenAiModelChat] response.choices is empty")
     }
 
-    return { message: makeLlmAssistantMessage(choice.message) }
+    return { message: makeModelAssistantMessage(choice.message) }
   }
 }
 
 function makeOpenAiMessage(
-  message: LlmMessage,
+  message: ModelMessage,
 ): OpenAI.Chat.ChatCompletionMessageParam {
   switch (message.role) {
     case "system":
@@ -60,7 +60,7 @@ function makeOpenAiMessage(
   }
 }
 
-function makeOpenAiTool(tool: LlmToolSpec): OpenAI.Chat.ChatCompletionTool {
+function makeOpenAiTool(tool: ModelToolSpec): OpenAI.Chat.ChatCompletionTool {
   return {
     type: "function",
     function: {
@@ -72,7 +72,7 @@ function makeOpenAiTool(tool: LlmToolSpec): OpenAI.Chat.ChatCompletionTool {
 }
 
 function makeOpenAiToolCall(
-  toolCall: LlmToolCall,
+  toolCall: ModelToolCall,
 ): OpenAI.Chat.ChatCompletionMessageFunctionToolCall {
   return {
     id: toolCall.id,
@@ -84,9 +84,9 @@ function makeOpenAiToolCall(
   }
 }
 
-function makeLlmAssistantMessage(
+function makeModelAssistantMessage(
   message: OpenAI.Chat.ChatCompletionMessage,
-): LlmAssistantMessage {
+): ModelAssistantMessage {
   const toolCalls =
     message.tool_calls
       ?.filter((toolCall) => toolCall.type === "function")

@@ -1,6 +1,6 @@
 import assert from "node:assert"
 import { test } from "node:test"
-import { authDeepSeekRead, authParse, makeLlmConfig } from "./Auth.ts"
+import { authDeepSeekRead, authParse, makeModelConfig } from "./Auth.ts"
 
 test("authParse parses deepseek api-key auth", () => {
   const auth = authParse(
@@ -56,9 +56,9 @@ test("authDeepSeekRead rejects missing deepseek auth", () => {
   assert.throws(() => authDeepSeekRead({}), /auth\.deepseek is missing/)
 })
 
-test("makeLlmConfig uses defaults", () => {
+test("makeModelConfig uses defaults", () => {
   assert.deepStrictEqual(
-    makeLlmConfig({
+    makeModelConfig({
       deepseek: {
         type: "api-key",
         key: "test-key",

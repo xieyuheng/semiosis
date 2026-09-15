@@ -1,17 +1,17 @@
 import { errorReport } from "@xieyuheng/std.js/error"
 import { agentRun, makeAgentState, type AgentEvent } from "../agent/index.ts"
-import { authRead, makeLlmConfig } from "../auth/index.ts"
-import { makeOpenAiLlmChat } from "../llm/index.ts"
+import { authRead, makeModelConfig } from "../auth/index.ts"
+import { makeOpenAiModelChat } from "../model/index.ts"
 import { makeEchoTool } from "../tool/index.ts"
 
 export async function agentCommandRun(prompt: string): Promise<void> {
   const auth = authRead()
-  const config = makeLlmConfig(auth)
-  const llmChat = makeOpenAiLlmChat(config)
+  const config = makeModelConfig(auth)
+  const modelChat = makeOpenAiModelChat(config)
   const state = makeAgentState()
 
   for await (const event of agentRun(state, prompt, {
-    llmChat,
+    modelChat,
     tools: [makeEchoTool()],
     maxSteps: 8,
   })) {

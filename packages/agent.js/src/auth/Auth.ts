@@ -2,7 +2,7 @@ import fs from "node:fs"
 import Os from "node:os"
 import Path from "node:path"
 import { z } from "zod"
-import type { LlmConfig } from "../llm/Llm.ts"
+import type { ModelConfig } from "../model/Model.ts"
 
 const deepSeekAuthSchema = z.object({
   type: z.literal("api-key"),
@@ -55,7 +55,7 @@ export function authDeepSeekRead(auth: Auth): DeepSeekAuth {
   return deepseek
 }
 
-export function makeLlmConfig(auth: Auth): LlmConfig {
+export function makeModelConfig(auth: Auth): ModelConfig {
   const deepseek = authDeepSeekRead(auth)
   return {
     apiKey: deepseek.key,

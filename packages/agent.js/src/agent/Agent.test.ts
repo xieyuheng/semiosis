@@ -1,12 +1,12 @@
 import assert from "node:assert"
 import { test } from "node:test"
-import type { LlmChat, LlmMessage } from "../llm/Llm.ts"
+import type { ModelChat, ModelMessage } from "../model/Model.ts"
 import { makeEchoTool } from "../tool/index.ts"
 import { agentRun, makeAgentState } from "./index.ts"
 
 test("agentRun runs tool calls and returns final answer", async () => {
-  const requests: Array<Array<LlmMessage>> = []
-  const llmChat: LlmChat = async (request) => {
+  const requests: Array<Array<ModelMessage>> = []
+  const modelChat: ModelChat = async (request) => {
     requests.push(request.messages)
     if (request.messages.length === 1) {
       return {
@@ -36,7 +36,7 @@ test("agentRun runs tool calls and returns final answer", async () => {
   const state = makeAgentState()
   const events = []
   for await (const event of agentRun(state, "use echo", {
-    llmChat,
+    modelChat,
     tools: [makeEchoTool()],
     maxSteps: 4,
   })) {
@@ -75,9 +75,9 @@ test("agentRun runs tool calls and returns final answer", async () => {
   ])
 })
 
-test("agentRun sends tool specs to llm chat", async () => {
+test("agentRun sends tool specs to model chat", async () => {
   let toolNames: Array<string> = []
-  const llmChat: LlmChat = async (request) => {
+  const modelChat: ModelChat = async (request) => {
     toolNames = request.tools.map((tool) => tool.name)
     return {
       message: { role: "assistant", content: "done", toolCalls: [] },
@@ -86,7 +86,7 @@ test("agentRun sends tool specs to llm chat", async () => {
 
   const state = makeAgentState()
   for await (const _event of agentRun(state, "hello", {
-    llmChat,
+    modelChat,
     tools: [makeEchoTool()],
     maxSteps: 1,
   })) {
@@ -97,7 +97,7 @@ test("agentRun sends tool specs to llm chat", async () => {
 })
 
 test("agentRun reports max steps", async () => {
-  const llmChat: LlmChat = async () => ({
+  const modelChat: ModelChat = async () => ({
     message: {
       role: "assistant",
       content: "",
@@ -114,7 +114,7 @@ test("agentRun reports max steps", async () => {
   const state = makeAgentState()
   const events = []
   for await (const event of agentRun(state, "loop", {
-    llmChat,
+    modelChat,
     tools: [makeEchoTool()],
     maxSteps: 1,
   })) {
@@ -140,7 +140,7 @@ test("agentRun reports max steps", async () => {
 })
 
 test("agentRun returns tool errors to the model", async () => {
-  const llmChat: LlmChat = async (request) => {
+  const modelChat: ModelChat = async (request) => {
     if (request.messages.length === 1) {
       return {
         message: {
@@ -170,7 +170,7 @@ test("agentRun returns tool errors to the model", async () => {
   const state = makeAgentState()
   const events = []
   for await (const event of agentRun(state, "break tools", {
-    llmChat,
+    modelChat,
     tools: [makeEchoTool()],
     maxSteps: 4,
   })) {

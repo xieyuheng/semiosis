@@ -1,5 +1,5 @@
 import { errorReport } from "@xieyuheng/std.js/error"
-import type { LlmMessage, LlmToolCall } from "../llm/Llm.ts"
+import type { ModelMessage, ModelToolCall } from "../model/Model.ts"
 import type { AgentEvent, AgentOptions, AgentState } from "./Agent.ts"
 
 export async function* agentRun(
@@ -21,7 +21,7 @@ export async function* agentRun(
     }
 
     step += 1
-    const response = await options.llmChat({
+    const response = await options.modelChat({
       messages: state.messages,
       tools: options.tools.map((tool) => tool.spec),
     })
@@ -54,7 +54,7 @@ export async function* agentRun(
 }
 
 async function toolCallRun(
-  toolCall: LlmToolCall,
+  toolCall: ModelToolCall,
   options: AgentOptions,
 ): Promise<string> {
   const tool = options.tools.find((tool) => tool.spec.name === toolCall.name)
@@ -70,7 +70,7 @@ async function toolCallRun(
   }
 }
 
-function toolArgumentsParse(toolCall: LlmToolCall): Record<string, unknown> {
+function toolArgumentsParse(toolCall: ModelToolCall): Record<string, unknown> {
   let value: unknown
   try {
     value = JSON.parse(toolCall.arguments)

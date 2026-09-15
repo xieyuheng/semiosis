@@ -1,10 +1,10 @@
-import type { LlmToolSpec } from "../llm/Llm.ts"
+import type { ModelToolSpec } from "../model/Model.ts"
 
 export type ToolHandler = (
   args: Record<string, unknown>,
 ) => string | Promise<string>
 
 export type Tool = {
-  spec: LlmToolSpec
+  spec: ModelToolSpec
   handler: ToolHandler
 }
