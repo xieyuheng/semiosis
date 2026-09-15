@@ -8,6 +8,12 @@ importers:
 
   packages/agent.js:
     dependencies:
+      '@xieyuheng/cli.js':
+        specifier: workspace:*
+        version: link:../cli.js
+      '@xieyuheng/std.js':
+        specifier: workspace:*
+        version: link:../std.js
       openai:
         specifier: ^7.15.0
         version: 7.15.0(zod@4.6.5)
@@ -26,22 +32,6 @@ importers:
         version: 7.0.2
 
   packages/cli.js:
-    dependencies:
-      '@xieyuheng/std.js':
-        specifier: workspace:*
-        version: link:../std.js
-    devDependencies:
-      '@types/node':
-        specifier: ^26.5.1
-        version: 26.5.1
-      prettier:
-        specifier: ^3.9.6
-        version: 3.9.6
-      typescript:
-        specifier: ^7.0.2
-        version: 7.0.2
-
-  packages/semiosis.js:
     dependencies:
       '@xieyuheng/std.js':
         specifier: workspace:*
