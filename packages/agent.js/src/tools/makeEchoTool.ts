@@ -1,4 +1,4 @@
-import type { Tool } from "./Tool.ts"
+import type { Tool } from "../tool/Tool.ts"
 
 export function makeEchoTool(): Tool {
   return {

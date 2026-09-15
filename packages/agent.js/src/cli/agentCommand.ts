@@ -1,8 +1,8 @@
 import { errorReport } from "@xieyuheng/std.js/error"
 import { agentRun, makeAgentState, type AgentEvent } from "../agent/index.ts"
 import { authRead, makeModelConfig } from "../auth/index.ts"
-import { makeOpenAiModel } from "../model/index.ts"
-import { makeEchoTool } from "../tool/index.ts"
+import { makeOpenAiModel } from "../models/open-ai/index.ts"
+import { makeEchoTool } from "../tools/index.ts"
 
 export async function agentCommandRun(prompt: string): Promise<void> {
   const auth = authRead()

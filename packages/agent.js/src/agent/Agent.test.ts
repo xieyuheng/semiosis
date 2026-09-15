@@ -1,7 +1,7 @@
 import assert from "node:assert"
 import { test } from "node:test"
 import type { Model, ModelMessage } from "../model/Model.ts"
-import { makeEchoTool } from "../tool/index.ts"
+import { makeEchoTool } from "../tools/index.ts"
 import { agentRun, makeAgentState } from "./index.ts"
 
 test("agentRun runs tool calls and returns final answer", async () => {

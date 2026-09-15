@@ -7,7 +7,7 @@ import type {
   ModelRequest,
   ModelToolCall,
   ModelToolSpec,
-} from "./Model.ts"
+} from "../../model/Model.ts"
 
 export function makeOpenAiModel(config: ModelConfig): Model {
   const client = new OpenAI({
