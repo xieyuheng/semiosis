@@ -7,11 +7,11 @@ import { makeEchoTool } from "../tools/index.ts"
 import { agentRun, makeAgentState } from "./index.ts"
 
 test("agentRun runs tool calls and returns final answer", async () => {
-  const requests: Array<Array<Sign>> = []
+  const inputs: Array<Array<Sign>> = []
   const model: Model = {
-    interpret: async (request) => {
-      requests.push(request.context.signs)
-      if (request.context.signs.length === 1) {
+    interpret: async (input) => {
+      inputs.push(input.context.signs)
+      if (input.context.signs.length === 1) {
         return {
           sign: {
             kind: "AssistantSign",
@@ -85,8 +85,8 @@ test("agentRun runs tool calls and returns final answer", async () => {
 test("agentRun sends tool specs to model interpret", async () => {
   let toolNames: Array<string> = []
   const model: Model = {
-    interpret: async (request) => {
-      toolNames = request.tools.map((tool) => tool.name)
+    interpret: async (input) => {
+      toolNames = input.tools.map((tool) => tool.name)
       return {
         sign: { kind: "AssistantSign", content: "done", toolCalls: [] },
       }
@@ -156,8 +156,8 @@ test("agentRun reports max steps", async () => {
 
 test("agentRun returns tool errors to the model", async () => {
   const model: Model = {
-    interpret: async (request) => {
-      if (request.context.signs.length === 1) {
+    interpret: async (input) => {
+      if (input.context.signs.length === 1) {
         return {
           sign: {
             kind: "AssistantSign",
@@ -234,8 +234,8 @@ test("agentRun passes env to tool handler", async () => {
   }
 
   const model: Model = {
-    interpret: async (request) => {
-      if (request.context.signs.length === 1) {
+    interpret: async (input) => {
+      if (input.context.signs.length === 1) {
         return {
           sign: {
             kind: "AssistantSign",

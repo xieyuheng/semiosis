@@ -5,7 +5,7 @@ export type Model = {
   interpret: ModelInterpret
 }
 
-export type ModelInterpret = (request: ModelInput) => Promise<ModelOutput>
+export type ModelInterpret = (input: ModelInput) => Promise<ModelOutput>
 
 export type ModelInput = {
   context: Context

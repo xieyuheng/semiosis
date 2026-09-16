@@ -14,18 +14,18 @@ export function makeOpenAiModel(config: ModelConfig): Model {
   })
 
   return {
-    interpret: async (request: ModelInput) => {
-      const tools = request.tools.map(makeOpenAiTool)
-      const response = await client.chat.completions.create({
+    interpret: async (input: ModelInput) => {
+      const tools = input.tools.map(makeOpenAiTool)
+      const output = await client.chat.completions.create({
         model: config.model,
-        messages: request.context.signs.map(makeOpenAiMessage),
+        messages: input.context.signs.map(makeOpenAiMessage),
         ...(tools.length === 0 ? {} : { tools }),
         reasoning_effort: "none",
       })
 
-      const choice = response.choices[0]
+      const choice = output.choices[0]
       if (choice === undefined) {
-        throw new Error("[makeOpenAiModel] response.choices is empty")
+        throw new Error("[makeOpenAiModel] output.choices is empty")
       }
 
       return { sign: makeAssistantSign(choice.message) }

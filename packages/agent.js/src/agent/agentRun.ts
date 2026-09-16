@@ -22,9 +22,9 @@ export async function* agentRun(
 
     step += 1
 
-    let response
+    let output
     try {
-      response = await options.model.interpret({
+      output = await options.model.interpret({
         context: state.context,
         tools: options.tools.map((tool) => tool.spec),
       })
@@ -36,7 +36,7 @@ export async function* agentRun(
       return
     }
 
-    const assistantSign = response.sign
+    const assistantSign = output.sign
     state.context.signs.push(assistantSign)
     yield assistantSign
 
