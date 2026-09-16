@@ -1,3 +1,5 @@
+import type { ToolCall } from "../tool/index.ts"
+
 export type Sign = SystemSign | UserSign | AssistantSign | ToolSign | ErrorSign
 
 export type SystemSign = {
@@ -110,10 +112,4 @@ export function isErrorSign(value: Sign): value is ErrorSign {
 export function asErrorSign(value: Sign): ErrorSign {
   if (isErrorSign(value)) return value
   throw new Error(`[asErrorSign] fail on: ${value.kind}`)
-}
-
-export type ToolCall = {
-  id: string
-  name: string
-  arguments: string
 }

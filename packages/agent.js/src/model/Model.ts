@@ -1,3 +1,4 @@
+import type { ToolSpec } from "../tool/index.ts"
 import type { Context } from "./Context.ts"
 import type { Sign } from "../sign/index.ts"
 
@@ -9,7 +10,7 @@ export type ModelInterpret = (input: ModelInput) => Promise<ModelOutput>
 
 export type ModelInput = {
   context: Context
-  tools: Array<ModelToolSpec>
+  tools: Array<ToolSpec>
 }
 
 export type ModelOutput = {
@@ -20,10 +21,4 @@ export type ModelConfig = {
   apiKey: string
   baseUrl: string
   model: string
-}
-
-export type ModelToolSpec = {
-  name: string
-  description: string
-  parameters: Record<string, unknown>
 }

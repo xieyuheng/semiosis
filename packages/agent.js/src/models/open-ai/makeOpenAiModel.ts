@@ -1,17 +1,8 @@
+import type { ToolCall, ToolSpec } from "../../tool/index.ts"
 import { errorReport } from "@xieyuheng/std.js/error"
 import OpenAI from "openai"
-import type {
-  Model,
-  ModelConfig,
-  ModelInput,
-  ModelToolSpec,
-} from "../../model/Model.ts"
-import {
-  AssistantSign,
-  ErrorSign,
-  type Sign,
-  type ToolCall,
-} from "../../sign/index.ts"
+import type { Model, ModelConfig, ModelInput } from "../../model/index.ts"
+import { AssistantSign, ErrorSign, type Sign } from "../../sign/index.ts"
 
 export function makeOpenAiModel(config: ModelConfig): Model {
   const client = new OpenAI({
@@ -72,7 +63,7 @@ function makeOpenAiMessage(sign: Sign): OpenAI.Chat.ChatCompletionMessageParam {
   }
 }
 
-function makeOpenAiTool(tool: ModelToolSpec): OpenAI.Chat.ChatCompletionTool {
+function makeOpenAiTool(tool: ToolSpec): OpenAI.Chat.ChatCompletionTool {
   return {
     type: "function",
     function: {
