@@ -16,6 +16,7 @@ test("agentRun runs tool calls and returns final answer", async () => {
           sign: {
             kind: "AssistantSign",
             content: "",
+            reasoning: "",
             toolCalls: [
               {
                 id: "call-1",
@@ -31,6 +32,7 @@ test("agentRun runs tool calls and returns final answer", async () => {
         sign: {
           kind: "AssistantSign",
           content: "done",
+          reasoning: "",
           toolCalls: [],
         },
       }
@@ -53,6 +55,7 @@ test("agentRun runs tool calls and returns final answer", async () => {
     {
       kind: "AssistantSign",
       content: "",
+      reasoning: "",
       toolCalls: [
         {
           id: "call-1",
@@ -62,13 +65,14 @@ test("agentRun runs tool calls and returns final answer", async () => {
       ],
     },
     { kind: "ToolSign", toolCallId: "call-1", content: "hello" },
-    { kind: "AssistantSign", content: "done", toolCalls: [] },
+    { kind: "AssistantSign", content: "done", reasoning: "", toolCalls: [] },
   ])
 
   assert.deepStrictEqual(signs, [
     {
       kind: "AssistantSign",
       content: "",
+      reasoning: "",
       toolCalls: [
         {
           id: "call-1",
@@ -78,7 +82,7 @@ test("agentRun runs tool calls and returns final answer", async () => {
       ],
     },
     { kind: "ToolSign", toolCallId: "call-1", content: "hello" },
-    { kind: "AssistantSign", content: "done", toolCalls: [] },
+    { kind: "AssistantSign", content: "done", reasoning: "", toolCalls: [] },
   ])
 })
 
@@ -88,7 +92,12 @@ test("agentRun sends tool specs to model interpret", async () => {
     interpret: async (input) => {
       toolNames = input.tools.map((tool) => tool.name)
       return {
-        sign: { kind: "AssistantSign", content: "done", toolCalls: [] },
+        sign: {
+          kind: "AssistantSign",
+          content: "done",
+          reasoning: "",
+          toolCalls: [],
+        },
       }
     },
   }
@@ -112,6 +121,7 @@ test("agentRun reports max steps", async () => {
       sign: {
         kind: "AssistantSign",
         content: "",
+        reasoning: "",
         toolCalls: [
           {
             id: "call-1",
@@ -138,6 +148,7 @@ test("agentRun reports max steps", async () => {
     {
       kind: "AssistantSign",
       content: "",
+      reasoning: "",
       toolCalls: [
         {
           id: "call-1",
@@ -162,6 +173,7 @@ test("agentRun returns tool errors to the model", async () => {
           sign: {
             kind: "AssistantSign",
             content: "",
+            reasoning: "",
             toolCalls: [
               {
                 id: "call-1",
@@ -179,7 +191,12 @@ test("agentRun returns tool errors to the model", async () => {
       }
 
       return {
-        sign: { kind: "AssistantSign", content: "fixed", toolCalls: [] },
+        sign: {
+          kind: "AssistantSign",
+          content: "fixed",
+          reasoning: "",
+          toolCalls: [],
+        },
       }
     },
   }
@@ -212,6 +229,7 @@ test("agentRun returns tool errors to the model", async () => {
   assert.deepStrictEqual(agent.context.signs[4], {
     kind: "AssistantSign",
     content: "fixed",
+    reasoning: "",
     toolCalls: [],
   })
 })
@@ -240,6 +258,7 @@ test("agentRun passes agent to tool handler", async () => {
           sign: {
             kind: "AssistantSign",
             content: "",
+            reasoning: "",
             toolCalls: [
               {
                 id: "call-1",
@@ -252,7 +271,12 @@ test("agentRun passes agent to tool handler", async () => {
       }
 
       return {
-        sign: { kind: "AssistantSign", content: "done", toolCalls: [] },
+        sign: {
+          kind: "AssistantSign",
+          content: "done",
+          reasoning: "",
+          toolCalls: [],
+        },
       }
     },
   }

@@ -2,15 +2,18 @@ import * as Readline from "node:readline"
 import process from "node:process"
 import { errorReport } from "@xieyuheng/std.js/error"
 import { agentRun, makeAgent } from "../agent/index.ts"
-import { authRead, makeModelConfig } from "../auth/index.ts"
+import { authRead } from "../auth/index.ts"
 import { formatSign } from "../format/index.ts"
-import { makeOpenAiModel } from "../models/open-ai/index.ts"
+import {
+  makeDeepSeekConfig,
+  makeDeepSeekModel,
+} from "../models/deepseek/index.ts"
 import { makeBashTool } from "../tools/index.ts"
 
 export async function agentRepl(): Promise<void> {
   const auth = authRead()
-  const config = makeModelConfig(auth)
-  const model = makeOpenAiModel(config)
+  const config = makeDeepSeekConfig(auth)
+  const model = makeDeepSeekModel(config)
   const agent = makeAgent(model, {
     system: "You are a helpful software engineer assistant.",
     cwd: process.cwd(),

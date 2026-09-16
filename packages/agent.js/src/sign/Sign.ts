@@ -47,16 +47,19 @@ export function asUserSign(value: Sign): UserSign {
 export type AssistantSign = {
   kind: "AssistantSign"
   content: string
+  reasoning: string
   toolCalls: Array<ToolCall>
 }
 
 export function AssistantSign(
   content: string,
+  reasoning: string,
   toolCalls: Array<ToolCall>,
 ): AssistantSign {
   return {
     kind: "AssistantSign",
     content,
+    reasoning,
     toolCalls,
   }
 }

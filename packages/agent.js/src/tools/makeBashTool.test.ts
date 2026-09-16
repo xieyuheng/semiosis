@@ -8,7 +8,7 @@ import { makeBashTool, type BashToolOptions } from "./makeBashTool.ts"
 
 const model: Model = {
   interpret: async () => ({
-    sign: AssistantSign("", []),
+    sign: AssistantSign("", "", []),
   }),
 }
 

@@ -4,7 +4,19 @@ import OpenAI from "openai"
 import type { Model, ModelConfig, ModelInput } from "../../model/index.ts"
 import { AssistantSign, ErrorSign, type Sign } from "../../sign/index.ts"
 
-export function makeOpenAiModel(config: ModelConfig): Model {
+export type OpenAiModelOptions = {
+  requestParams?: () => Record<string, unknown>
+}
+
+type OpenAiAssistantMessageParam =
+  OpenAI.Chat.ChatCompletionAssistantMessageParam & {
+    reasoning_content?: string
+  }
+
+export function makeOpenAiModel(
+  config: ModelConfig,
+  options: OpenAiModelOptions = {},
+): Model {
   const client = new OpenAI({
     apiKey: config.apiKey,
     baseURL: config.baseUrl,
@@ -14,12 +26,14 @@ export function makeOpenAiModel(config: ModelConfig): Model {
     interpret: async (input: ModelInput) => {
       try {
         const tools = input.tools.map(makeOpenAiTool)
+        const requestParams = options.requestParams?.() ?? {}
         const output = await client.chat.completions.create({
           model: config.model,
           messages: input.context.signs.map(makeOpenAiMessage),
           ...(tools.length === 0 ? {} : { tools }),
           reasoning_effort: "none",
-        })
+          ...requestParams,
+        } as OpenAI.Chat.ChatCompletionCreateParamsNonStreaming)
 
         const choice = output.choices[0]
         if (choice === undefined) {
@@ -43,14 +57,17 @@ function makeOpenAiMessage(sign: Sign): OpenAI.Chat.ChatCompletionMessageParam {
     case "UserSign":
       return { role: "user", content: sign.content }
     case "AssistantSign": {
-      if (sign.toolCalls.length === 0) {
-        return { role: "assistant", content: sign.content }
-      }
-      return {
+      const message: OpenAiAssistantMessageParam = {
         role: "assistant",
         content: sign.content,
-        tool_calls: sign.toolCalls.map(makeOpenAiToolCall),
       }
+      if (sign.reasoning !== "") {
+        message.reasoning_content = sign.reasoning
+      }
+      if (sign.toolCalls.length !== 0) {
+        message.tool_calls = sign.toolCalls.map(makeOpenAiToolCall)
+      }
+      return message
     }
     case "ToolSign":
       return {
@@ -90,6 +107,9 @@ function makeOpenAiToolCall(
 function makeAssistantSign(
   message: OpenAI.Chat.ChatCompletionMessage,
 ): AssistantSign {
+  const reasoning =
+    (message as { reasoning_content?: string | null }).reasoning_content ?? ""
+
   const toolCalls =
     message.tool_calls
       ?.filter((toolCall) => toolCall.type === "function")
@@ -99,5 +119,5 @@ function makeAssistantSign(
         arguments: toolCall.function.arguments,
       })) ?? []
 
-  return AssistantSign(message.content ?? "", toolCalls)
+  return AssistantSign(message.content ?? "", reasoning, toolCalls)
 }
