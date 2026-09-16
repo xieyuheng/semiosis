@@ -1,9 +1,10 @@
-import type { Model, ModelMessage, ModelToolCall } from "../model/Model.ts"
+import type { Context } from "../model/Context.ts"
+import type { Model } from "../model/Model.ts"
 import type { Tool } from "../tool/Tool.ts"
 import type { AgentEnv } from "./AgentEnv.ts"
 
 export type AgentState = {
-  messages: Array<ModelMessage>
+  context: Context
 }
 
 export type AgentOptions = {
@@ -13,13 +14,6 @@ export type AgentOptions = {
   env: AgentEnv
 }
 
-export type AgentEvent =
-  | { type: "assistant_text"; text: string }
-  | { type: "tool_call"; toolCall: ModelToolCall }
-  | { type: "tool_result"; toolCallId: string; content: string }
-  | { type: "error"; message: string }
-  | { type: "done" }
-
 export function makeAgentState(): AgentState {
-  return { messages: [] }
+  return { context: { signs: [] } }
 }

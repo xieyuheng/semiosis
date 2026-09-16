@@ -1,13 +1,9 @@
 import * as Readline from "node:readline"
 import process from "node:process"
 import { errorReport } from "@xieyuheng/std.js/error"
-import {
-  agentRun,
-  makeAgentState,
-  type AgentEvent,
-  type AgentOptions,
-} from "../agent/index.ts"
+import { agentRun, makeAgentState, type AgentOptions } from "../agent/index.ts"
 import { authRead, makeModelConfig } from "../auth/index.ts"
+import type { Sign } from "../model/Sign.ts"
 import { makeOpenAiModel } from "../models/open-ai/index.ts"
 import { makeEchoTool } from "../tools/index.ts"
 
@@ -70,21 +66,21 @@ export async function agentRepl(): Promise<void> {
     }
 
     if (input === "/clear") {
-      state.messages.length = 0
+      state.context.signs.length = 0
       console.log("history cleared")
       if (!isClosed) readline.prompt()
       continue
     }
 
     if (input === "/debug") {
-      console.log(JSON.stringify(state.messages, null, 2))
+      console.log(JSON.stringify(state.context.signs, null, 2))
       if (!isClosed) readline.prompt()
       continue
     }
 
     try {
-      for await (const event of agentRun(state, input, options)) {
-        agentEventPrint(event)
+      for await (const sign of agentRun(state, input, options)) {
+        signPrint(sign)
       }
     } catch (error) {
       console.error(errorReport(error))
@@ -97,23 +93,25 @@ export async function agentRepl(): Promise<void> {
   console.log("bye")
 }
 
-function agentEventPrint(event: AgentEvent): void {
-  switch (event.type) {
-    case "assistant_text":
-      console.log(event.text)
+function signPrint(sign: Sign): void {
+  switch (sign.kind) {
+    case "SystemSign":
+    case "UserSign":
+      console.log(sign.content)
       break
-    case "tool_call":
-      console.error(
-        `[tool call] ${event.toolCall.name} ${event.toolCall.arguments}`,
-      )
+    case "AssistantSign":
+      if (sign.content !== "") {
+        console.log(sign.content)
+      }
+      for (const toolCall of sign.toolCalls) {
+        console.error(`[tool call] ${toolCall.name} ${toolCall.arguments}`)
+      }
       break
-    case "tool_result":
-      console.error(`[tool result] ${event.content}`)
+    case "ToolSign":
+      console.error(`[tool result] ${sign.content}`)
       break
-    case "error":
-      console.error(event.message)
-      break
-    case "done":
+    case "ErrorSign":
+      console.error(sign.message)
       break
   }
 }

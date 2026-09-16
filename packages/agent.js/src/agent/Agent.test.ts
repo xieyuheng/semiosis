@@ -1,19 +1,20 @@
 import assert from "node:assert"
 import { test } from "node:test"
-import type { Model, ModelMessage } from "../model/Model.ts"
+import type { Model } from "../model/Model.ts"
+import type { Sign } from "../model/Sign.ts"
 import type { Tool } from "../tool/Tool.ts"
 import { makeEchoTool } from "../tools/index.ts"
 import { agentRun, makeAgentState } from "./index.ts"
 
 test("agentRun runs tool calls and returns final answer", async () => {
-  const requests: Array<Array<ModelMessage>> = []
+  const requests: Array<Array<Sign>> = []
   const model: Model = {
     interpret: async (request) => {
-      requests.push(request.messages)
-      if (request.messages.length === 1) {
+      requests.push(request.context.signs)
+      if (request.context.signs.length === 1) {
         return {
-          message: {
-            role: "assistant",
+          sign: {
+            kind: "AssistantSign",
             content: "",
             toolCalls: [
               {
@@ -27,8 +28,8 @@ test("agentRun runs tool calls and returns final answer", async () => {
       }
 
       return {
-        message: {
-          role: "assistant",
+        sign: {
+          kind: "AssistantSign",
           content: "done",
           toolCalls: [],
         },
@@ -37,20 +38,20 @@ test("agentRun runs tool calls and returns final answer", async () => {
   }
 
   const state = makeAgentState()
-  const events = []
-  for await (const event of agentRun(state, "use echo", {
+  const signs: Array<Sign> = []
+  for await (const sign of agentRun(state, "use echo", {
     model,
     tools: [makeEchoTool()],
     maxSteps: 4,
     env: { cwd: "/workspace" },
   })) {
-    events.push(event)
+    signs.push(sign)
   }
 
-  assert.deepStrictEqual(state.messages, [
-    { role: "user", content: "use echo" },
+  assert.deepStrictEqual(state.context.signs, [
+    { kind: "UserSign", content: "use echo" },
     {
-      role: "assistant",
+      kind: "AssistantSign",
       content: "",
       toolCalls: [
         {
@@ -60,22 +61,24 @@ test("agentRun runs tool calls and returns final answer", async () => {
         },
       ],
     },
-    { role: "tool", toolCallId: "call-1", content: "hello" },
-    { role: "assistant", content: "done", toolCalls: [] },
+    { kind: "ToolSign", toolCallId: "call-1", content: "hello" },
+    { kind: "AssistantSign", content: "done", toolCalls: [] },
   ])
 
-  assert.deepStrictEqual(events, [
+  assert.deepStrictEqual(signs, [
     {
-      type: "tool_call",
-      toolCall: {
-        id: "call-1",
-        name: "echo",
-        arguments: '{"text":"hello"}',
-      },
+      kind: "AssistantSign",
+      content: "",
+      toolCalls: [
+        {
+          id: "call-1",
+          name: "echo",
+          arguments: '{"text":"hello"}',
+        },
+      ],
     },
-    { type: "tool_result", toolCallId: "call-1", content: "hello" },
-    { type: "assistant_text", text: "done" },
-    { type: "done" },
+    { kind: "ToolSign", toolCallId: "call-1", content: "hello" },
+    { kind: "AssistantSign", content: "done", toolCalls: [] },
   ])
 })
 
@@ -85,19 +88,19 @@ test("agentRun sends tool specs to model interpret", async () => {
     interpret: async (request) => {
       toolNames = request.tools.map((tool) => tool.name)
       return {
-        message: { role: "assistant", content: "done", toolCalls: [] },
+        sign: { kind: "AssistantSign", content: "done", toolCalls: [] },
       }
     },
   }
 
   const state = makeAgentState()
-  for await (const _event of agentRun(state, "hello", {
+  for await (const _sign of agentRun(state, "hello", {
     model,
     tools: [makeEchoTool()],
     maxSteps: 1,
     env: { cwd: "/workspace" },
   })) {
-    void _event
+    void _sign
   }
 
   assert.deepStrictEqual(toolNames, ["echo"])
@@ -106,8 +109,8 @@ test("agentRun sends tool specs to model interpret", async () => {
 test("agentRun reports max steps", async () => {
   const model: Model = {
     interpret: async () => ({
-      message: {
-        role: "assistant",
+      sign: {
+        kind: "AssistantSign",
         content: "",
         toolCalls: [
           {
@@ -121,41 +124,43 @@ test("agentRun reports max steps", async () => {
   }
 
   const state = makeAgentState()
-  const events = []
-  for await (const event of agentRun(state, "loop", {
+  const signs: Array<Sign> = []
+  for await (const sign of agentRun(state, "loop", {
     model,
     tools: [makeEchoTool()],
     maxSteps: 1,
     env: { cwd: "/workspace" },
   })) {
-    events.push(event)
+    signs.push(sign)
   }
 
-  assert.deepStrictEqual(events, [
+  assert.deepStrictEqual(signs, [
     {
-      type: "tool_call",
-      toolCall: {
-        id: "call-1",
-        name: "echo",
-        arguments: '{"text":"hello"}',
-      },
+      kind: "AssistantSign",
+      content: "",
+      toolCalls: [
+        {
+          id: "call-1",
+          name: "echo",
+          arguments: '{"text":"hello"}',
+        },
+      ],
     },
-    { type: "tool_result", toolCallId: "call-1", content: "hello" },
+    { kind: "ToolSign", toolCallId: "call-1", content: "hello" },
     {
-      type: "error",
+      kind: "ErrorSign",
       message: "[agentRun] max steps reached: 1",
     },
-    { type: "done" },
   ])
 })
 
 test("agentRun returns tool errors to the model", async () => {
   const model: Model = {
     interpret: async (request) => {
-      if (request.messages.length === 1) {
+      if (request.context.signs.length === 1) {
         return {
-          message: {
-            role: "assistant",
+          sign: {
+            kind: "AssistantSign",
             content: "",
             toolCalls: [
               {
@@ -174,34 +179,38 @@ test("agentRun returns tool errors to the model", async () => {
       }
 
       return {
-        message: { role: "assistant", content: "fixed", toolCalls: [] },
+        sign: { kind: "AssistantSign", content: "fixed", toolCalls: [] },
       }
     },
   }
 
   const state = makeAgentState()
-  const events = []
-  for await (const event of agentRun(state, "break tools", {
+  const signs: Array<Sign> = []
+  for await (const sign of agentRun(state, "break tools", {
     model,
     tools: [makeEchoTool()],
     maxSteps: 4,
     env: { cwd: "/workspace" },
   })) {
-    events.push(event)
+    signs.push(sign)
   }
 
-  assert.deepStrictEqual(state.messages[2], {
-    role: "tool",
+  assert.deepStrictEqual(state.context.signs[2], {
+    kind: "ToolSign",
     toolCallId: "call-1",
     content: "[agentRun] unknown tool: missing",
   })
 
-  assert.strictEqual(state.messages[3].role, "tool")
-  assert.strictEqual(state.messages[3].toolCallId, "call-2")
-  assert.match(state.messages[3].content, /invalid arguments for tool echo/)
+  const toolSign = state.context.signs[3]
+  assert.strictEqual(toolSign.kind, "ToolSign")
+  if (toolSign.kind !== "ToolSign") {
+    throw new Error("expected ToolSign")
+  }
+  assert.strictEqual(toolSign.toolCallId, "call-2")
+  assert.match(toolSign.content, /invalid arguments for tool echo/)
 
-  assert.deepStrictEqual(state.messages[4], {
-    role: "assistant",
+  assert.deepStrictEqual(state.context.signs[4], {
+    kind: "AssistantSign",
     content: "fixed",
     toolCalls: [],
   })
@@ -226,10 +235,10 @@ test("agentRun passes env to tool handler", async () => {
 
   const model: Model = {
     interpret: async (request) => {
-      if (request.messages.length === 1) {
+      if (request.context.signs.length === 1) {
         return {
-          message: {
-            role: "assistant",
+          sign: {
+            kind: "AssistantSign",
             content: "",
             toolCalls: [
               {
@@ -243,26 +252,55 @@ test("agentRun passes env to tool handler", async () => {
       }
 
       return {
-        message: { role: "assistant", content: "done", toolCalls: [] },
+        sign: { kind: "AssistantSign", content: "done", toolCalls: [] },
       }
     },
   }
 
   const state = makeAgentState()
-  const events = []
-  for await (const event of agentRun(state, "env", {
+  const signs: Array<Sign> = []
+  for await (const sign of agentRun(state, "env", {
     model,
     tools: [tool],
     maxSteps: 4,
     env: { cwd: "/workspace" },
   })) {
-    events.push(event)
+    signs.push(sign)
   }
 
   assert.strictEqual(envCwd, "/workspace")
-  assert.deepStrictEqual(events[1], {
-    type: "tool_result",
+  assert.deepStrictEqual(signs[1], {
+    kind: "ToolSign",
     toolCallId: "call-1",
     content: "/workspace",
   })
+})
+
+test("agentRun reports model interpret error", async () => {
+  const model: Model = {
+    interpret: async () => {
+      throw new Error("provider failed")
+    },
+  }
+
+  const state = makeAgentState()
+  const signs: Array<Sign> = []
+  for await (const sign of agentRun(state, "hello", {
+    model,
+    tools: [makeEchoTool()],
+    maxSteps: 4,
+    env: { cwd: "/workspace" },
+  })) {
+    signs.push(sign)
+  }
+
+  assert.deepStrictEqual(state.context.signs, [
+    { kind: "UserSign", content: "hello" },
+  ])
+  assert.deepStrictEqual(signs, [
+    {
+      kind: "ErrorSign",
+      message: "[agentRun] model interpret failed: provider failed",
+    },
+  ])
 })

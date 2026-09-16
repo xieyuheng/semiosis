@@ -1,13 +1,11 @@
 import OpenAI from "openai"
 import type {
-  ModelAssistantMessage,
   Model,
   ModelConfig,
-  ModelMessage,
-  ModelRequest,
-  ModelToolCall,
+  ModelInput,
   ModelToolSpec,
 } from "../../model/Model.ts"
+import type { AssistantSign, Sign, ToolCall } from "../../model/Sign.ts"
 
 export function makeOpenAiModel(config: ModelConfig): Model {
   const client = new OpenAI({
@@ -16,11 +14,11 @@ export function makeOpenAiModel(config: ModelConfig): Model {
   })
 
   return {
-    interpret: async (request: ModelRequest) => {
+    interpret: async (request: ModelInput) => {
       const tools = request.tools.map(makeOpenAiTool)
       const response = await client.chat.completions.create({
         model: config.model,
-        messages: request.messages.map(makeOpenAiMessage),
+        messages: request.context.signs.map(makeOpenAiMessage),
         ...(tools.length === 0 ? {} : { tools }),
         reasoning_effort: "none",
       })
@@ -30,35 +28,35 @@ export function makeOpenAiModel(config: ModelConfig): Model {
         throw new Error("[makeOpenAiModel] response.choices is empty")
       }
 
-      return { message: makeModelAssistantMessage(choice.message) }
+      return { sign: makeAssistantSign(choice.message) }
     },
   }
 }
 
-function makeOpenAiMessage(
-  message: ModelMessage,
-): OpenAI.Chat.ChatCompletionMessageParam {
-  switch (message.role) {
-    case "system":
-      return { role: "system", content: message.content }
-    case "user":
-      return { role: "user", content: message.content }
-    case "assistant": {
-      if (message.toolCalls.length === 0) {
-        return { role: "assistant", content: message.content }
+function makeOpenAiMessage(sign: Sign): OpenAI.Chat.ChatCompletionMessageParam {
+  switch (sign.kind) {
+    case "SystemSign":
+      return { role: "system", content: sign.content }
+    case "UserSign":
+      return { role: "user", content: sign.content }
+    case "AssistantSign": {
+      if (sign.toolCalls.length === 0) {
+        return { role: "assistant", content: sign.content }
       }
       return {
         role: "assistant",
-        content: message.content,
-        tool_calls: message.toolCalls.map(makeOpenAiToolCall),
+        content: sign.content,
+        tool_calls: sign.toolCalls.map(makeOpenAiToolCall),
       }
     }
-    case "tool":
+    case "ToolSign":
       return {
         role: "tool",
-        tool_call_id: message.toolCallId,
-        content: message.content,
+        tool_call_id: sign.toolCallId,
+        content: sign.content,
       }
+    case "ErrorSign":
+      throw new Error("[makeOpenAiMessage] cannot send ErrorSign to OpenAI")
   }
 }
 
@@ -74,7 +72,7 @@ function makeOpenAiTool(tool: ModelToolSpec): OpenAI.Chat.ChatCompletionTool {
 }
 
 function makeOpenAiToolCall(
-  toolCall: ModelToolCall,
+  toolCall: ToolCall,
 ): OpenAI.Chat.ChatCompletionMessageFunctionToolCall {
   return {
     id: toolCall.id,
@@ -86,9 +84,9 @@ function makeOpenAiToolCall(
   }
 }
 
-function makeModelAssistantMessage(
+function makeAssistantSign(
   message: OpenAI.Chat.ChatCompletionMessage,
-): ModelAssistantMessage {
+): AssistantSign {
   const toolCalls =
     message.tool_calls
       ?.filter((toolCall) => toolCall.type === "function")
@@ -99,7 +97,7 @@ function makeModelAssistantMessage(
       })) ?? []
 
   return {
-    role: "assistant",
+    kind: "AssistantSign",
     content: message.content ?? "",
     toolCalls,
   }

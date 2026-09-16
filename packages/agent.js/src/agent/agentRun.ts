@@ -1,60 +1,64 @@
 import { errorReport } from "@xieyuheng/std.js/error"
-import type { ModelMessage, ModelToolCall } from "../model/Model.ts"
-import type { AgentEvent, AgentOptions, AgentState } from "./Agent.ts"
+import type { Sign, ToolCall, ToolSign, UserSign } from "../model/Sign.ts"
+import type { AgentOptions, AgentState } from "./Agent.ts"
 
 export async function* agentRun(
   state: AgentState,
   input: string,
   options: AgentOptions,
-): AsyncGenerator<AgentEvent> {
-  state.messages.push({ role: "user", content: input })
+): AsyncGenerator<Sign> {
+  const userSign: UserSign = { kind: "UserSign", content: input }
+  state.context.signs.push(userSign)
 
   let step = 0
   while (true) {
     if (step >= options.maxSteps) {
       yield {
-        type: "error",
+        kind: "ErrorSign",
         message: `[agentRun] max steps reached: ${options.maxSteps}`,
       }
-      yield { type: "done" }
       return
     }
 
     step += 1
-    const response = await options.model.interpret({
-      messages: state.messages,
-      tools: options.tools.map((tool) => tool.spec),
-    })
 
-    const assistant = response.message
-    state.messages.push(assistant)
-
-    if (assistant.content !== "") {
-      yield { type: "assistant_text", text: assistant.content }
-    }
-
-    const toolCalls = assistant.toolCalls
-    if (toolCalls.length === 0) {
-      yield { type: "done" }
+    let response
+    try {
+      response = await options.model.interpret({
+        context: state.context,
+        tools: options.tools.map((tool) => tool.spec),
+      })
+    } catch (error) {
+      yield {
+        kind: "ErrorSign",
+        message: `[agentRun] model interpret failed: ${errorReport(error)}`,
+      }
       return
     }
 
-    for (const toolCall of toolCalls) {
-      yield { type: "tool_call", toolCall }
+    const assistantSign = response.sign
+    state.context.signs.push(assistantSign)
+    yield assistantSign
 
+    if (assistantSign.toolCalls.length === 0) {
+      return
+    }
+
+    for (const toolCall of assistantSign.toolCalls) {
       const content = await toolCallRun(toolCall, options)
-      state.messages.push({
-        role: "tool",
+      const toolSign: ToolSign = {
+        kind: "ToolSign",
         toolCallId: toolCall.id,
         content,
-      })
-      yield { type: "tool_result", toolCallId: toolCall.id, content }
+      }
+      state.context.signs.push(toolSign)
+      yield toolSign
     }
   }
 }
 
 async function toolCallRun(
-  toolCall: ModelToolCall,
+  toolCall: ToolCall,
   options: AgentOptions,
 ): Promise<string> {
   const tool = options.tools.find((tool) => tool.spec.name === toolCall.name)
@@ -70,7 +74,7 @@ async function toolCallRun(
   }
 }
 
-function toolArgumentsParse(toolCall: ModelToolCall): Record<string, unknown> {
+function toolArgumentsParse(toolCall: ToolCall): Record<string, unknown> {
   let value: unknown
   try {
     value = JSON.parse(toolCall.arguments)
