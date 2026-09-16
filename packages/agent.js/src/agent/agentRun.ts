@@ -49,15 +49,15 @@ export async function* agentRun(
     }
 
     for (const toolCall of sign.toolCalls) {
-      const toolSign = await toolCallRun(toolCall, agent)
+      const sign = await toolCallRun(toolCall, agent)
 
-      if (isErrorSign(toolSign)) {
-        yield toolSign
+      if (isErrorSign(sign)) {
+        yield sign
         return
       }
 
-      agent.context.signs.push(toolSign)
-      yield toolSign
+      agent.context.signs.push(sign)
+      yield sign
     }
   }
 }

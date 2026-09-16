@@ -5,7 +5,7 @@ import { agentRun, makeAgent } from "../agent/index.ts"
 import { authRead, makeModelConfig } from "../auth/index.ts"
 import { formatSign } from "../format/index.ts"
 import { makeOpenAiModel } from "../models/open-ai/index.ts"
-import { makeEchoTool } from "../tools/index.ts"
+import { makeBashTool } from "../tools/index.ts"
 
 export async function agentRepl(): Promise<void> {
   const auth = authRead()
@@ -13,7 +13,7 @@ export async function agentRepl(): Promise<void> {
   const model = makeOpenAiModel(config)
   const agent = makeAgent(model, {
     cwd: process.cwd(),
-    tools: [makeEchoTool()],
+    tools: [makeBashTool()],
     maxSteps: 8,
   })
 
