@@ -1,21 +1,24 @@
 import { errorReport } from "@xieyuheng/std.js/error"
-import type { Sign, ToolCall, ToolSign, UserSign } from "../model/Sign.ts"
+import {
+  ErrorSign,
+  ToolSign,
+  UserSign,
+  type Sign,
+  type ToolCall,
+} from "../model/Sign.ts"
 import type { Agent } from "./Agent.ts"
 
 export async function* agentRun(
   agent: Agent,
   input: string,
 ): AsyncGenerator<Sign> {
-  const userSign: UserSign = { kind: "UserSign", content: input }
+  const userSign = UserSign(input)
   agent.context.signs.push(userSign)
 
   let step = 0
   while (true) {
     if (step >= agent.config.maxSteps) {
-      yield {
-        kind: "ErrorSign",
-        message: `[agentRun] max steps reached: ${agent.config.maxSteps}`,
-      }
+      yield ErrorSign(`[agentRun] max steps reached: ${agent.config.maxSteps}`)
       return
     }
 
@@ -28,10 +31,9 @@ export async function* agentRun(
         tools: agent.config.tools.map((tool) => tool.spec),
       })
     } catch (error) {
-      yield {
-        kind: "ErrorSign",
-        message: `[agentRun] model interpret failed: ${errorReport(error)}`,
-      }
+      yield ErrorSign(
+        `[agentRun] model interpret failed: ${errorReport(error)}`,
+      )
       return
     }
 
@@ -45,11 +47,7 @@ export async function* agentRun(
 
     for (const toolCall of assistantSign.toolCalls) {
       const content = await toolCallRun(toolCall, agent)
-      const toolSign: ToolSign = {
-        kind: "ToolSign",
-        toolCallId: toolCall.id,
-        content,
-      }
+      const toolSign = ToolSign(toolCall.id, content)
       agent.context.signs.push(toolSign)
       yield toolSign
     }

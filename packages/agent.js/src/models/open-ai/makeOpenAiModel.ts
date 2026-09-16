@@ -5,7 +5,7 @@ import type {
   ModelInput,
   ModelToolSpec,
 } from "../../model/Model.ts"
-import type { AssistantSign, Sign, ToolCall } from "../../model/Sign.ts"
+import { AssistantSign, type Sign, type ToolCall } from "../../model/Sign.ts"
 
 export function makeOpenAiModel(config: ModelConfig): Model {
   const client = new OpenAI({
@@ -96,9 +96,5 @@ function makeAssistantSign(
         arguments: toolCall.function.arguments,
       })) ?? []
 
-  return {
-    kind: "AssistantSign",
-    content: message.content ?? "",
-    toolCalls,
-  }
+  return AssistantSign(message.content ?? "", toolCalls)
 }
