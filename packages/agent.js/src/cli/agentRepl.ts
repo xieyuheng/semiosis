@@ -3,7 +3,7 @@ import process from "node:process"
 import { errorReport } from "@xieyuheng/std.js/error"
 import { agentRun, makeAgentState, type AgentOptions } from "../agent/index.ts"
 import { authRead, makeModelConfig } from "../auth/index.ts"
-import type { Sign } from "../model/Sign.ts"
+import { formatSign } from "../format/index.ts"
 import { makeOpenAiModel } from "../models/open-ai/index.ts"
 import { makeEchoTool } from "../tools/index.ts"
 
@@ -80,10 +80,13 @@ export async function agentRepl(): Promise<void> {
 
     try {
       for await (const sign of agentRun(state, input, options)) {
-        signPrint(sign)
+        const output = formatSign(sign)
+        if (output !== "") {
+          console.log(output)
+        }
       }
     } catch (error) {
-      console.error(errorReport(error))
+      console.log(errorReport(error))
     }
 
     if (!isClosed) readline.prompt()
@@ -91,27 +94,4 @@ export async function agentRepl(): Promise<void> {
 
   readline.close()
   console.log("bye")
-}
-
-function signPrint(sign: Sign): void {
-  switch (sign.kind) {
-    case "SystemSign":
-    case "UserSign":
-      console.log(sign.content)
-      break
-    case "AssistantSign":
-      if (sign.content !== "") {
-        console.log(sign.content)
-      }
-      for (const toolCall of sign.toolCalls) {
-        console.error(`[tool call] ${toolCall.name} ${toolCall.arguments}`)
-      }
-      break
-    case "ToolSign":
-      console.error(`[tool result] ${sign.content}`)
-      break
-    case "ErrorSign":
-      console.error(sign.message)
-      break
-  }
 }

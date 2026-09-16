@@ -18,6 +18,6 @@ router.defineHandlers({
 try {
   await router.run(process.argv.slice(2))
 } catch (error) {
-  console.error(errorReport(error))
+  console.log(errorReport(error))
   process.exit(1)
 }
