@@ -1,21 +1,20 @@
 import { errorReport } from "@xieyuheng/std.js/error"
 import type { Sign, ToolCall, ToolSign, UserSign } from "../model/Sign.ts"
-import type { AgentOptions, AgentState } from "./Agent.ts"
+import type { Agent } from "./Agent.ts"
 
 export async function* agentRun(
-  state: AgentState,
+  agent: Agent,
   input: string,
-  options: AgentOptions,
 ): AsyncGenerator<Sign> {
   const userSign: UserSign = { kind: "UserSign", content: input }
-  state.context.signs.push(userSign)
+  agent.context.signs.push(userSign)
 
   let step = 0
   while (true) {
-    if (step >= options.maxSteps) {
+    if (step >= agent.config.maxSteps) {
       yield {
         kind: "ErrorSign",
-        message: `[agentRun] max steps reached: ${options.maxSteps}`,
+        message: `[agentRun] max steps reached: ${agent.config.maxSteps}`,
       }
       return
     }
@@ -24,9 +23,9 @@ export async function* agentRun(
 
     let output
     try {
-      output = await options.model.interpret({
-        context: state.context,
-        tools: options.tools.map((tool) => tool.spec),
+      output = await agent.model.interpret({
+        context: agent.context,
+        tools: agent.config.tools.map((tool) => tool.spec),
       })
     } catch (error) {
       yield {
@@ -37,7 +36,7 @@ export async function* agentRun(
     }
 
     const assistantSign = output.sign
-    state.context.signs.push(assistantSign)
+    agent.context.signs.push(assistantSign)
     yield assistantSign
 
     if (assistantSign.toolCalls.length === 0) {
@@ -45,30 +44,29 @@ export async function* agentRun(
     }
 
     for (const toolCall of assistantSign.toolCalls) {
-      const content = await toolCallRun(toolCall, options)
+      const content = await toolCallRun(toolCall, agent)
       const toolSign: ToolSign = {
         kind: "ToolSign",
         toolCallId: toolCall.id,
         content,
       }
-      state.context.signs.push(toolSign)
+      agent.context.signs.push(toolSign)
       yield toolSign
     }
   }
 }
 
-async function toolCallRun(
-  toolCall: ToolCall,
-  options: AgentOptions,
-): Promise<string> {
-  const tool = options.tools.find((tool) => tool.spec.name === toolCall.name)
+async function toolCallRun(toolCall: ToolCall, agent: Agent): Promise<string> {
+  const tool = agent.config.tools.find(
+    (tool) => tool.spec.name === toolCall.name,
+  )
   if (tool === undefined) {
     return `[agentRun] unknown tool: ${toolCall.name}`
   }
 
   try {
     const args = toolArgumentsParse(toolCall)
-    return await tool.handler(options.env, args)
+    return await tool.handler(agent, args)
   } catch (error) {
     return errorReport(error)
   }

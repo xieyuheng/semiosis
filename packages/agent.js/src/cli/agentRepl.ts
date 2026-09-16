@@ -1,7 +1,7 @@
 import * as Readline from "node:readline"
 import process from "node:process"
 import { errorReport } from "@xieyuheng/std.js/error"
-import { agentRun, makeAgentState, type AgentOptions } from "../agent/index.ts"
+import { agentRun, makeAgent } from "../agent/index.ts"
 import { authRead, makeModelConfig } from "../auth/index.ts"
 import { formatSign } from "../format/index.ts"
 import { makeOpenAiModel } from "../models/open-ai/index.ts"
@@ -11,13 +11,11 @@ export async function agentRepl(): Promise<void> {
   const auth = authRead()
   const config = makeModelConfig(auth)
   const model = makeOpenAiModel(config)
-  const state = makeAgentState()
-  const options: AgentOptions = {
-    model,
+  const agent = makeAgent(model, {
+    cwd: process.cwd(),
     tools: [makeEchoTool()],
     maxSteps: 8,
-    env: { cwd: process.cwd() },
-  }
+  })
 
   const readline = Readline.createInterface({
     input: process.stdin,
@@ -66,20 +64,20 @@ export async function agentRepl(): Promise<void> {
     }
 
     if (input === "/clear") {
-      state.context.signs.length = 0
+      agent.context.signs.length = 0
       console.log("history cleared")
       if (!isClosed) readline.prompt()
       continue
     }
 
     if (input === "/debug") {
-      console.log(JSON.stringify(state.context.signs, null, 2))
+      console.log(JSON.stringify(agent.context.signs, null, 2))
       if (!isClosed) readline.prompt()
       continue
     }
 
     try {
-      for await (const sign of agentRun(state, input, options)) {
+      for await (const sign of agentRun(agent, input)) {
         const output = formatSign(sign)
         if (output !== "") {
           console.log(output)

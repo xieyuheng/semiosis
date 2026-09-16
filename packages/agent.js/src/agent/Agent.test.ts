@@ -4,7 +4,7 @@ import type { Model } from "../model/Model.ts"
 import type { Sign } from "../model/Sign.ts"
 import type { Tool } from "../tool/Tool.ts"
 import { makeEchoTool } from "../tools/index.ts"
-import { agentRun, makeAgentState } from "./index.ts"
+import { agentRun, makeAgent } from "./index.ts"
 
 test("agentRun runs tool calls and returns final answer", async () => {
   const inputs: Array<Array<Sign>> = []
@@ -37,18 +37,17 @@ test("agentRun runs tool calls and returns final answer", async () => {
     },
   }
 
-  const state = makeAgentState()
-  const signs: Array<Sign> = []
-  for await (const sign of agentRun(state, "use echo", {
-    model,
+  const agent = makeAgent(model, {
+    cwd: "/workspace",
     tools: [makeEchoTool()],
     maxSteps: 4,
-    env: { cwd: "/workspace" },
-  })) {
+  })
+  const signs: Array<Sign> = []
+  for await (const sign of agentRun(agent, "use echo")) {
     signs.push(sign)
   }
 
-  assert.deepStrictEqual(state.context.signs, [
+  assert.deepStrictEqual(agent.context.signs, [
     { kind: "UserSign", content: "use echo" },
     {
       kind: "AssistantSign",
@@ -93,13 +92,12 @@ test("agentRun sends tool specs to model interpret", async () => {
     },
   }
 
-  const state = makeAgentState()
-  for await (const _sign of agentRun(state, "hello", {
-    model,
+  const agent = makeAgent(model, {
+    cwd: "/workspace",
     tools: [makeEchoTool()],
     maxSteps: 1,
-    env: { cwd: "/workspace" },
-  })) {
+  })
+  for await (const _sign of agentRun(agent, "hello")) {
     void _sign
   }
 
@@ -123,14 +121,13 @@ test("agentRun reports max steps", async () => {
     }),
   }
 
-  const state = makeAgentState()
-  const signs: Array<Sign> = []
-  for await (const sign of agentRun(state, "loop", {
-    model,
+  const agent = makeAgent(model, {
+    cwd: "/workspace",
     tools: [makeEchoTool()],
     maxSteps: 1,
-    env: { cwd: "/workspace" },
-  })) {
+  })
+  const signs: Array<Sign> = []
+  for await (const sign of agentRun(agent, "loop")) {
     signs.push(sign)
   }
 
@@ -184,24 +181,23 @@ test("agentRun returns tool errors to the model", async () => {
     },
   }
 
-  const state = makeAgentState()
-  const signs: Array<Sign> = []
-  for await (const sign of agentRun(state, "break tools", {
-    model,
+  const agent = makeAgent(model, {
+    cwd: "/workspace",
     tools: [makeEchoTool()],
     maxSteps: 4,
-    env: { cwd: "/workspace" },
-  })) {
+  })
+  const signs: Array<Sign> = []
+  for await (const sign of agentRun(agent, "break tools")) {
     signs.push(sign)
   }
 
-  assert.deepStrictEqual(state.context.signs[2], {
+  assert.deepStrictEqual(agent.context.signs[2], {
     kind: "ToolSign",
     toolCallId: "call-1",
     content: "[agentRun] unknown tool: missing",
   })
 
-  const toolSign = state.context.signs[3]
+  const toolSign = agent.context.signs[3]
   assert.strictEqual(toolSign.kind, "ToolSign")
   if (toolSign.kind !== "ToolSign") {
     throw new Error("expected ToolSign")
@@ -209,27 +205,27 @@ test("agentRun returns tool errors to the model", async () => {
   assert.strictEqual(toolSign.toolCallId, "call-2")
   assert.match(toolSign.content, /invalid arguments for tool echo/)
 
-  assert.deepStrictEqual(state.context.signs[4], {
+  assert.deepStrictEqual(agent.context.signs[4], {
     kind: "AssistantSign",
     content: "fixed",
     toolCalls: [],
   })
 })
 
-test("agentRun passes env to tool handler", async () => {
+test("agentRun passes agent to tool handler", async () => {
   let envCwd = ""
   const tool: Tool = {
     spec: {
       name: "env",
-      description: "Read env.cwd.",
+      description: "Read agent.config.cwd.",
       parameters: {
         type: "object",
         properties: {},
       },
     },
-    handler: (env) => {
-      envCwd = env.cwd
-      return env.cwd
+    handler: (agent) => {
+      envCwd = agent.config.cwd
+      return agent.config.cwd
     },
   }
 
@@ -257,14 +253,13 @@ test("agentRun passes env to tool handler", async () => {
     },
   }
 
-  const state = makeAgentState()
-  const signs: Array<Sign> = []
-  for await (const sign of agentRun(state, "env", {
-    model,
+  const agent = makeAgent(model, {
+    cwd: "/workspace",
     tools: [tool],
     maxSteps: 4,
-    env: { cwd: "/workspace" },
-  })) {
+  })
+  const signs: Array<Sign> = []
+  for await (const sign of agentRun(agent, "env")) {
     signs.push(sign)
   }
 
@@ -283,18 +278,17 @@ test("agentRun reports model interpret error", async () => {
     },
   }
 
-  const state = makeAgentState()
-  const signs: Array<Sign> = []
-  for await (const sign of agentRun(state, "hello", {
-    model,
+  const agent = makeAgent(model, {
+    cwd: "/workspace",
     tools: [makeEchoTool()],
     maxSteps: 4,
-    env: { cwd: "/workspace" },
-  })) {
+  })
+  const signs: Array<Sign> = []
+  for await (const sign of agentRun(agent, "hello")) {
     signs.push(sign)
   }
 
-  assert.deepStrictEqual(state.context.signs, [
+  assert.deepStrictEqual(agent.context.signs, [
     { kind: "UserSign", content: "hello" },
   ])
   assert.deepStrictEqual(signs, [

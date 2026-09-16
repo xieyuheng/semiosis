@@ -1,19 +1,23 @@
 import type { Context } from "../model/Context.ts"
 import type { Model } from "../model/Model.ts"
 import type { Tool } from "../tool/Tool.ts"
-import type { AgentEnv } from "./AgentEnv.ts"
 
-export type AgentState = {
+export type Agent = {
+  model: Model
+  config: AgentConfig
   context: Context
 }
 
-export type AgentOptions = {
-  model: Model
+export type AgentConfig = {
+  cwd: string
   tools: Array<Tool>
   maxSteps: number
-  env: AgentEnv
 }
 
-export function makeAgentState(): AgentState {
-  return { context: { signs: [] } }
+export function makeAgent(model: Model, config: AgentConfig): Agent {
+  return {
+    model,
+    config,
+    context: { signs: [] },
+  }
 }
