@@ -1,6 +1,7 @@
 import assert from "node:assert"
 import { test } from "node:test"
 import type { Model, ModelMessage } from "../model/Model.ts"
+import type { Tool } from "../tool/Tool.ts"
 import { makeEchoTool } from "../tools/index.ts"
 import { agentRun, makeAgentState } from "./index.ts"
 
@@ -41,6 +42,7 @@ test("agentRun runs tool calls and returns final answer", async () => {
     model,
     tools: [makeEchoTool()],
     maxSteps: 4,
+    env: { cwd: "/workspace" },
   })) {
     events.push(event)
   }
@@ -93,6 +95,7 @@ test("agentRun sends tool specs to model interpret", async () => {
     model,
     tools: [makeEchoTool()],
     maxSteps: 1,
+    env: { cwd: "/workspace" },
   })) {
     void _event
   }
@@ -123,6 +126,7 @@ test("agentRun reports max steps", async () => {
     model,
     tools: [makeEchoTool()],
     maxSteps: 1,
+    env: { cwd: "/workspace" },
   })) {
     events.push(event)
   }
@@ -181,6 +185,7 @@ test("agentRun returns tool errors to the model", async () => {
     model,
     tools: [makeEchoTool()],
     maxSteps: 4,
+    env: { cwd: "/workspace" },
   })) {
     events.push(event)
   }
@@ -199,5 +204,65 @@ test("agentRun returns tool errors to the model", async () => {
     role: "assistant",
     content: "fixed",
     toolCalls: [],
+  })
+})
+
+test("agentRun passes env to tool handler", async () => {
+  let envCwd = ""
+  const tool: Tool = {
+    spec: {
+      name: "env",
+      description: "Read env.cwd.",
+      parameters: {
+        type: "object",
+        properties: {},
+      },
+    },
+    handler: (env) => {
+      envCwd = env.cwd
+      return env.cwd
+    },
+  }
+
+  const model: Model = {
+    interpret: async (request) => {
+      if (request.messages.length === 1) {
+        return {
+          message: {
+            role: "assistant",
+            content: "",
+            toolCalls: [
+              {
+                id: "call-1",
+                name: "env",
+                arguments: "{}",
+              },
+            ],
+          },
+        }
+      }
+
+      return {
+        message: { role: "assistant", content: "done", toolCalls: [] },
+      }
+    },
+  }
+
+  const state = makeAgentState()
+  const events = []
+  for await (const event of agentRun(state, "env", {
+    model,
+    tools: [tool],
+    maxSteps: 4,
+    env: { cwd: "/workspace" },
+  })) {
+    events.push(event)
+  }
+
+  assert.strictEqual(envCwd, "/workspace")
+  assert.deepStrictEqual(events[1], {
+    type: "tool_result",
+    toolCallId: "call-1",
+    content: "/workspace",
   })
 })

@@ -1,5 +1,6 @@
 import type { Model, ModelMessage, ModelToolCall } from "../model/Model.ts"
 import type { Tool } from "../tool/Tool.ts"
+import type { AgentEnv } from "./AgentEnv.ts"
 
 export type AgentState = {
   messages: Array<ModelMessage>
@@ -9,6 +10,7 @@ export type AgentOptions = {
   model: Model
   tools: Array<Tool>
   maxSteps: number
+  env: AgentEnv
 }
 
 export type AgentEvent =

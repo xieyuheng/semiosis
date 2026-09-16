@@ -64,7 +64,7 @@ async function toolCallRun(
 
   try {
     const args = toolArgumentsParse(toolCall)
-    return await tool.handler(args)
+    return await tool.handler(options.env, args)
   } catch (error) {
     return errorReport(error)
   }

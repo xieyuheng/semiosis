@@ -1,5 +1,4 @@
-learn about agentic loop (tool call)
-setup agent.js package (core)
-- 用文学式编程的方式，在 AI 的帮助下，实现一个极简 agent
+写项目初始的 diary
+为 agent.js package 增加文学式编程文档
 setup ide.js package -- 支持 markdown 的极简 IDE
 setup semiosis.js package (coding agent)

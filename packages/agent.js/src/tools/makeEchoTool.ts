@@ -16,6 +16,6 @@ export function makeEchoTool(): Tool {
         required: ["text"],
       },
     },
-    handler: (args) => String(args.text ?? ""),
+    handler: (_env, args) => String(args.text ?? ""),
   }
 }
