@@ -4,15 +4,15 @@ import * as cli from "@xieyuheng/cli.js"
 import { errorReport } from "@xieyuheng/std.js/error"
 import { getPackageJson } from "@xieyuheng/std.js/node"
 import { fileURLToPath } from "node:url"
-import { agentCommandRun } from "./cli/agentCommand.ts"
+import { agentRepl } from "./cli/agentRepl.ts"
 
 const { version } = getPackageJson(fileURLToPath(import.meta.url))
 const router = cli.createRouter("agent.js", version)
 
-router.defineRoutes(["agent prompt"])
+router.defineRoutes(["repl"])
 
 router.defineHandlers({
-  agent: ({ args: [prompt] }) => agentCommandRun(String(prompt)),
+  repl: () => agentRepl(),
 })
 
 try {
