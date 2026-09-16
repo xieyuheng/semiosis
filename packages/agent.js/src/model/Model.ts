@@ -1,20 +1,23 @@
-export type ModelConfig = {
-  apiKey: string
-  baseUrl: string
-  model: string
+export type Model = {
+  interpret: ModelInterpret
 }
 
-export type ModelToolCall = {
-  id: string
-  name: string
-  arguments: string
+export type ModelInterpret = (request: ModelRequest) => Promise<ModelResponse>
+
+export type ModelRequest = {
+  messages: Array<ModelMessage>
+  tools: Array<ModelToolSpec>
 }
 
-export type ModelToolSpec = {
-  name: string
-  description: string
-  parameters: Record<string, unknown>
+export type ModelResponse = {
+  message: ModelAssistantMessage
 }
+
+export type ModelMessage =
+  | ModelSystemMessage
+  | ModelUserMessage
+  | ModelAssistantMessage
+  | ModelToolMessage
 
 export type ModelSystemMessage = {
   role: "system"
@@ -38,23 +41,20 @@ export type ModelToolMessage = {
   content: string
 }
 
-export type ModelMessage =
-  | ModelSystemMessage
-  | ModelUserMessage
-  | ModelAssistantMessage
-  | ModelToolMessage
-
-export type ModelRequest = {
-  messages: Array<ModelMessage>
-  tools: Array<ModelToolSpec>
+export type ModelToolSpec = {
+  name: string
+  description: string
+  parameters: Record<string, unknown>
 }
 
-export type ModelInterpret = (request: ModelRequest) => Promise<ModelResponse>
-
-export type ModelResponse = {
-  message: ModelAssistantMessage
+export type ModelToolCall = {
+  id: string
+  name: string
+  arguments: string
 }
 
-export type Model = {
-  interpret: ModelInterpret
+export type ModelConfig = {
+  apiKey: string
+  baseUrl: string
+  model: string
 }
