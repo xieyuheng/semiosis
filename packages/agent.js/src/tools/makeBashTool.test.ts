@@ -18,6 +18,7 @@ function makeTestBashTool(options: Omit<BashToolOptions, "description">) {
     ...options,
   })
   const agent = makeAgent(model, {
+    system: "",
     cwd: process.cwd(),
     tools: [tool],
     maxSteps: 1,

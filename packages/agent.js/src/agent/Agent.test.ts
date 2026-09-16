@@ -1,7 +1,7 @@
 import assert from "node:assert"
 import { test } from "node:test"
 import type { Model } from "../model/Model.ts"
-import { ErrorSign, type Sign } from "../sign/index.ts"
+import { ErrorSign, SystemSign, type Sign } from "../sign/index.ts"
 import type { Tool } from "../tool/Tool.ts"
 import { makeEchoTool } from "../tools/index.ts"
 import { agentRun, makeAgent } from "./index.ts"
@@ -38,6 +38,7 @@ test("agentRun runs tool calls and returns final answer", async () => {
   }
 
   const agent = makeAgent(model, {
+    system: "",
     cwd: "/workspace",
     tools: [makeEchoTool()],
     maxSteps: 4,
@@ -93,6 +94,7 @@ test("agentRun sends tool specs to model interpret", async () => {
   }
 
   const agent = makeAgent(model, {
+    system: "",
     cwd: "/workspace",
     tools: [makeEchoTool()],
     maxSteps: 1,
@@ -122,6 +124,7 @@ test("agentRun reports max steps", async () => {
   }
 
   const agent = makeAgent(model, {
+    system: "",
     cwd: "/workspace",
     tools: [makeEchoTool()],
     maxSteps: 1,
@@ -182,6 +185,7 @@ test("agentRun returns tool errors to the model", async () => {
   }
 
   const agent = makeAgent(model, {
+    system: "",
     cwd: "/workspace",
     tools: [makeEchoTool()],
     maxSteps: 4,
@@ -254,6 +258,7 @@ test("agentRun passes agent to tool handler", async () => {
   }
 
   const agent = makeAgent(model, {
+    system: "",
     cwd: "/workspace",
     tools: [tool],
     maxSteps: 4,
@@ -279,6 +284,7 @@ test("agentRun reports model output error sign", async () => {
   }
 
   const agent = makeAgent(model, {
+    system: "",
     cwd: "/workspace",
     tools: [makeEchoTool()],
     maxSteps: 4,
@@ -292,4 +298,21 @@ test("agentRun reports model output error sign", async () => {
     { kind: "UserSign", content: "hello" },
   ])
   assert.deepStrictEqual(signs, [ErrorSign("provider failed")])
+})
+
+test("makeAgent puts system sign first", () => {
+  const model: Model = {
+    interpret: async () => ({
+      sign: SystemSign("unused"),
+    }),
+  }
+
+  const agent = makeAgent(model, {
+    system: "system prompt",
+    cwd: "/workspace",
+    tools: [],
+    maxSteps: 1,
+  })
+
+  assert.deepStrictEqual(agent.context.signs, [SystemSign("system prompt")])
 })

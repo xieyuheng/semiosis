@@ -12,6 +12,7 @@ export async function agentRepl(): Promise<void> {
   const config = makeModelConfig(auth)
   const model = makeOpenAiModel(config)
   const agent = makeAgent(model, {
+    system: "You are a helpful software engineer assistant.",
     cwd: process.cwd(),
     tools: [makeBashTool()],
     maxSteps: 8,
