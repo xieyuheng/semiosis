@@ -1,7 +1,7 @@
 import assert from "node:assert"
 import { test } from "node:test"
 import type { Model } from "../model/Model.ts"
-import type { Sign } from "../model/Sign.ts"
+import { ErrorSign, type Sign } from "../model/Sign.ts"
 import type { Tool } from "../tool/Tool.ts"
 import { makeEchoTool } from "../tools/index.ts"
 import { agentRun, makeAgent } from "./index.ts"
@@ -271,11 +271,11 @@ test("agentRun passes agent to tool handler", async () => {
   })
 })
 
-test("agentRun reports model interpret error", async () => {
+test("agentRun reports model output error sign", async () => {
   const model: Model = {
-    interpret: async () => {
-      throw new Error("provider failed")
-    },
+    interpret: async () => ({
+      sign: ErrorSign("provider failed"),
+    }),
   }
 
   const agent = makeAgent(model, {
@@ -291,10 +291,5 @@ test("agentRun reports model interpret error", async () => {
   assert.deepStrictEqual(agent.context.signs, [
     { kind: "UserSign", content: "hello" },
   ])
-  assert.deepStrictEqual(signs, [
-    {
-      kind: "ErrorSign",
-      message: "[agentRun] model interpret failed: provider failed",
-    },
-  ])
+  assert.deepStrictEqual(signs, [ErrorSign("provider failed")])
 })

@@ -1,5 +1,5 @@
 import type { Context } from "./Context.ts"
-import type { AssistantSign } from "./Sign.ts"
+import type { Sign } from "./Sign.ts"
 
 export type Model = {
   interpret: ModelInterpret
@@ -13,7 +13,7 @@ export type ModelInput = {
 }
 
 export type ModelOutput = {
-  sign: AssistantSign
+  sign: Sign
 }
 
 export type ModelConfig = {

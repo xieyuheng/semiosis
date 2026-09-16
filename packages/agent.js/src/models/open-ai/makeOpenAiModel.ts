@@ -1,3 +1,4 @@
+import { errorReport } from "@xieyuheng/std.js/error"
 import OpenAI from "openai"
 import type {
   Model,
@@ -5,7 +6,12 @@ import type {
   ModelInput,
   ModelToolSpec,
 } from "../../model/Model.ts"
-import { AssistantSign, type Sign, type ToolCall } from "../../model/Sign.ts"
+import {
+  AssistantSign,
+  ErrorSign,
+  type Sign,
+  type ToolCall,
+} from "../../model/Sign.ts"
 
 export function makeOpenAiModel(config: ModelConfig): Model {
   const client = new OpenAI({
@@ -15,20 +21,26 @@ export function makeOpenAiModel(config: ModelConfig): Model {
 
   return {
     interpret: async (input: ModelInput) => {
-      const tools = input.tools.map(makeOpenAiTool)
-      const output = await client.chat.completions.create({
-        model: config.model,
-        messages: input.context.signs.map(makeOpenAiMessage),
-        ...(tools.length === 0 ? {} : { tools }),
-        reasoning_effort: "none",
-      })
+      try {
+        const tools = input.tools.map(makeOpenAiTool)
+        const output = await client.chat.completions.create({
+          model: config.model,
+          messages: input.context.signs.map(makeOpenAiMessage),
+          ...(tools.length === 0 ? {} : { tools }),
+          reasoning_effort: "none",
+        })
 
-      const choice = output.choices[0]
-      if (choice === undefined) {
-        throw new Error("[makeOpenAiModel] output.choices is empty")
+        const choice = output.choices[0]
+        if (choice === undefined) {
+          throw new Error("[makeOpenAiModel] output.choices is empty")
+        }
+
+        return { sign: makeAssistantSign(choice.message) }
+      } catch (error) {
+        return {
+          sign: ErrorSign(`[makeOpenAiModel] ${errorReport(error)}`),
+        }
       }
-
-      return { sign: makeAssistantSign(choice.message) }
     },
   }
 }

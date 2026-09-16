@@ -3,6 +3,8 @@ import {
   ErrorSign,
   ToolSign,
   UserSign,
+  isAssistantSign,
+  isErrorSign,
   type Sign,
   type ToolCall,
 } from "../model/Sign.ts"
@@ -24,28 +26,31 @@ export async function* agentRun(
 
     step += 1
 
-    let output
-    try {
-      output = await agent.model.interpret({
-        context: agent.context,
-        tools: agent.config.tools.map((tool) => tool.spec),
-      })
-    } catch (error) {
-      yield ErrorSign(
-        `[agentRun] model interpret failed: ${errorReport(error)}`,
-      )
+    const output = await agent.model.interpret({
+      context: agent.context,
+      tools: agent.config.tools.map((tool) => tool.spec),
+    })
+
+    const sign = output.sign
+
+    if (isErrorSign(sign)) {
+      yield sign
       return
     }
 
-    const assistantSign = output.sign
-    agent.context.signs.push(assistantSign)
-    yield assistantSign
-
-    if (assistantSign.toolCalls.length === 0) {
+    if (!isAssistantSign(sign)) {
+      yield ErrorSign(`[agentRun] unexpected model output sign: ${sign.kind}`)
       return
     }
 
-    for (const toolCall of assistantSign.toolCalls) {
+    agent.context.signs.push(sign)
+    yield sign
+
+    if (sign.toolCalls.length === 0) {
+      return
+    }
+
+    for (const toolCall of sign.toolCalls) {
       const content = await toolCallRun(toolCall, agent)
       const toolSign = ToolSign(toolCall.id, content)
       agent.context.signs.push(toolSign)
