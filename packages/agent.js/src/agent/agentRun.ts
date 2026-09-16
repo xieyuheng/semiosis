@@ -7,7 +7,7 @@ import {
   isErrorSign,
   type Sign,
   type ToolCall,
-} from "../model/Sign.ts"
+} from "../sign/index.ts"
 import type { Agent } from "./Agent.ts"
 
 export async function* agentRun(

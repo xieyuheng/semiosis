@@ -11,7 +11,7 @@ import {
   ErrorSign,
   type Sign,
   type ToolCall,
-} from "../../model/Sign.ts"
+} from "../../sign/index.ts"
 
 export function makeOpenAiModel(config: ModelConfig): Model {
   const client = new OpenAI({

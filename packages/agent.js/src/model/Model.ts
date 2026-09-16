@@ -1,5 +1,5 @@
 import type { Context } from "./Context.ts"
-import type { Sign } from "./Sign.ts"
+import type { Sign } from "../sign/index.ts"
 
 export type Model = {
   interpret: ModelInterpret

@@ -1,7 +1,7 @@
 import assert from "node:assert"
 import { test } from "node:test"
 import type { Model } from "../model/Model.ts"
-import { ErrorSign, type Sign } from "../model/Sign.ts"
+import { ErrorSign, type Sign } from "../sign/index.ts"
 import type { Tool } from "../tool/Tool.ts"
 import { makeEchoTool } from "../tools/index.ts"
 import { agentRun, makeAgent } from "./index.ts"

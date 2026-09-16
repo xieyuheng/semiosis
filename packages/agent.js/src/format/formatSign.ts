@@ -1,4 +1,4 @@
-import type { Sign } from "../model/Sign.ts"
+import type { Sign } from "../sign/index.ts"
 
 export function formatSign(sign: Sign): string {
   switch (sign.kind) {
