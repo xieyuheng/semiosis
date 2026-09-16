@@ -39,7 +39,7 @@ export async function agentRepl(): Promise<void> {
   })
 
   console.log("agent.js repl")
-  console.log("commands: /exit /clear /debug")
+  console.log("commands: /exit /debug")
 
   readline.setPrompt("> ")
   readline.prompt()
@@ -59,13 +59,6 @@ export async function agentRepl(): Promise<void> {
     if (input === "/exit") break
 
     if (input === "") {
-      if (!isClosed) readline.prompt()
-      continue
-    }
-
-    if (input === "/clear") {
-      agent.context.signs.length = 0
-      console.log("history cleared")
       if (!isClosed) readline.prompt()
       continue
     }
