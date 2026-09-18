@@ -1,21 +1,10 @@
 import * as Readline from "node:readline"
 import process from "node:process"
 import { errorReport } from "@xieyuheng/std.js/error"
-import { agentRun, makeAgent } from "../agent/index.ts"
-
+import { agentRun, type Agent } from "../agent/index.ts"
 import { formatSign } from "../format/index.ts"
-import { makeModel } from "../models/index.ts"
-import { makeBashTool } from "../tools/index.ts"
 
-export async function agentRepl(): Promise<void> {
-  const model = makeModel("deepseek", "deepseek-flash")
-  const agent = makeAgent(model, {
-    system: "You are a helpful software engineer assistant.",
-    cwd: process.cwd(),
-    tools: [makeBashTool()],
-    maxSteps: 8,
-  })
-
+export async function startAgentRepl(agent: Agent): Promise<void> {
   const readline = Readline.createInterface({
     input: process.stdin,
     output: process.stdout,
