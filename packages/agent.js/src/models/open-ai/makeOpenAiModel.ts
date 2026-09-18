@@ -119,5 +119,5 @@ function makeAssistantSign(
         arguments: toolCall.function.arguments,
       })) ?? []
 
-  return AssistantSign(message.content ?? "", reasoning, toolCalls)
+  return AssistantSign(reasoning, message.content ?? "", toolCalls)
 }

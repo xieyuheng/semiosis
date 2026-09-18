@@ -46,20 +46,20 @@ export function asUserSign(value: Sign): UserSign {
 
 export type AssistantSign = {
   kind: "AssistantSign"
-  content: string
   reasoning: string
+  content: string
   toolCalls: Array<ToolCall>
 }
 
 export function AssistantSign(
-  content: string,
   reasoning: string,
+  content: string,
   toolCalls: Array<ToolCall>,
 ): AssistantSign {
   return {
     kind: "AssistantSign",
-    content,
     reasoning,
+    content,
     toolCalls,
   }
 }
