@@ -6,7 +6,7 @@ import type { DeepSeekModelConfig } from "./DeepSeekModelConfig.ts"
 
 export function readDeepSeekModelConfig(name: string): DeepSeekModelConfig {
   const path = deepSeekModelConfigPath(name)
-  const text = deepSeekTextRead(path)
+  const text = readDeepSeekModelConfigFile(path)
   return parseDeepSeekModelConfig(name, text)
 }
 
@@ -25,13 +25,13 @@ function deepSeekModelConfigPath(name: string): string {
   )
 }
 
-function deepSeekTextRead(path: string): string {
+function readDeepSeekModelConfigFile(path: string): string {
   try {
     return fs.readFileSync(path, "utf8")
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     throw new Error(
-      `[readDeepSeekModelConfig] fail to read model config: ${path}\n  ${message}`,
+      `[readDeepSeekModelConfigFile] fail to read model config: ${path}\n  ${message}`,
     )
   }
 }
