@@ -1,5 +1,5 @@
 export * from "./agent/index.ts"
-export * from "./auth/index.ts"
+export * from "./provider/index.ts"
 export * from "./format/index.ts"
 export * from "./model/index.ts"
 export * from "./sign/index.ts"

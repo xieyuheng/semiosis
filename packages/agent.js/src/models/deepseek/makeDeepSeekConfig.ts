@@ -1,12 +1,11 @@
-import { makeModelConfig, type Auth } from "../../auth/index.ts"
+import type { Provider } from "../../provider/index.ts"
 import type { DeepSeekConfig } from "./DeepSeekConfig.ts"
 
-export function makeDeepSeekConfig(auth: Auth): DeepSeekConfig {
-  const config = makeModelConfig(auth)
+export function makeDeepSeekConfig(provider: Provider): DeepSeekConfig {
   return {
-    apiKey: config.apiKey,
-    baseUrl: config.baseUrl,
-    model: config.model,
+    apiKey: provider.key,
+    baseUrl: "https://api.deepseek.com",
+    model: "deepseek-flash",
     thinking: "disabled",
     reasoningEffort: "none",
   }

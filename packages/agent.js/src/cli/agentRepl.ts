@@ -2,7 +2,7 @@ import * as Readline from "node:readline"
 import process from "node:process"
 import { errorReport } from "@xieyuheng/std.js/error"
 import { agentRun, makeAgent } from "../agent/index.ts"
-import { authRead } from "../auth/index.ts"
+import { providerRead } from "../provider/index.ts"
 import { formatSign } from "../format/index.ts"
 import {
   makeDeepSeekConfig,
@@ -11,8 +11,8 @@ import {
 import { makeBashTool } from "../tools/index.ts"
 
 export async function agentRepl(): Promise<void> {
-  const auth = authRead()
-  const config = makeDeepSeekConfig(auth)
+  const provider = providerRead("deepseek")
+  const config = makeDeepSeekConfig(provider)
   const model = makeDeepSeekModel(config)
   const agent = makeAgent(model, {
     system: "You are a helpful software engineer assistant.",
@@ -28,7 +28,7 @@ export async function agentRepl(): Promise<void> {
 
   const lines: Array<string> = []
   let isClosed = false
-  let wake: (() => void) | undefined
+  let wake: (() => void) | undefined = undefined
 
   readline.on("line", (line) => {
     lines.push(line)

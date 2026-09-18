@@ -24,14 +24,7 @@ export async function toolCallRun(
 }
 
 function toolArgumentsParse(toolCall: ToolCall): Record<string, unknown> {
-  let value: unknown
-  try {
-    value = JSON.parse(toolCall.arguments)
-  } catch (error) {
-    throw new Error(
-      `[agentRun] invalid arguments for tool ${toolCall.name}: ${errorReport(error)}`,
-    )
-  }
+  const value = toolArgumentsJsonParse(toolCall)
 
   if (typeof value !== "object" || value === null || value instanceof Array) {
     throw new Error(
@@ -40,4 +33,14 @@ function toolArgumentsParse(toolCall: ToolCall): Record<string, unknown> {
   }
 
   return value as Record<string, unknown>
+}
+
+function toolArgumentsJsonParse(toolCall: ToolCall): unknown {
+  try {
+    return JSON.parse(toolCall.arguments)
+  } catch (error) {
+    throw new Error(
+      `[agentRun] invalid arguments for tool ${toolCall.name}: ${errorReport(error)}`,
+    )
+  }
 }
