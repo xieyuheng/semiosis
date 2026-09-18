@@ -1,13 +1,17 @@
 import type { Model } from "../../model/index.ts"
 import { makeOpenAiModel } from "../open-ai/index.ts"
-import type { DeepSeekConfig } from "./DeepSeekConfig.ts"
+import type { DeepSeekModelConfig } from "./DeepSeekModelConfig.ts"
+import type { DeepSeekProvider } from "./DeepSeekProvider.ts"
 
-export function makeDeepSeekModel(config: DeepSeekConfig): Model {
+export function makeDeepSeekModel(
+  provider: DeepSeekProvider,
+  config: DeepSeekModelConfig,
+): Model {
   return makeOpenAiModel(
     {
-      apiKey: config.apiKey,
-      baseUrl: config.baseUrl,
-      model: config.model,
+      apiKey: provider.key,
+      baseUrl: provider.baseUrl,
+      model: config.name,
     },
     {
       requestParams: () => ({
