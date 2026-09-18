@@ -13,11 +13,19 @@ import { makeBashTool } from "./tools/index.ts"
 const { version } = getPackageJson(fileURLToPath(import.meta.url))
 const router = cli.createRouter("agent.js", version)
 
-router.defineRoutes(["repl"])
+router.defineRoutes([
+  "repl --model <provider-name>/<model-name> -- start agent repl in current directory",
+])
 
 router.defineHandlers({
-  repl: () => {
-    const model = makeModel("deepseek", "deepseek-flash")
+  repl: ({ options }) => {
+    const modelSpec = options["--model"]
+    if (modelSpec === undefined || modelSpec === "") {
+      throw new Error("repl requires --model <provider-name>/<model-name>")
+    }
+
+    const [providerName, modelName] = parseQualifiedModelName(modelSpec)
+    const model = makeModel(providerName, modelName)
     const agent = makeAgent(model, {
       system: "You are a helpful software engineer assistant.",
       cwd: process.cwd(),
@@ -33,4 +41,21 @@ try {
 } catch (error) {
   console.log(errorReport(error))
   process.exit(1)
+}
+
+function parseQualifiedModelName(text: string): [string, string] {
+  const [providerName, modelName, ...rest] = text.split("/")
+  if (
+    providerName === undefined ||
+    modelName === undefined ||
+    providerName === "" ||
+    modelName === "" ||
+    rest.length !== 0
+  ) {
+    throw new Error(
+      `invalid --model: ${text}, expected <provider-name>/<model-name>`,
+    )
+  }
+
+  return [providerName, modelName]
 }
