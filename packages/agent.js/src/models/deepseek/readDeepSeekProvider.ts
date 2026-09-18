@@ -6,7 +6,7 @@ import type { DeepSeekProvider } from "./DeepSeekProvider.ts"
 
 export function readDeepSeekProvider(): DeepSeekProvider {
   const path = deepSeekProviderPath()
-  const text = deepSeekTextRead(path)
+  const text = readDeepSeekProviderFile(path)
   return parseDeepSeekProvider(text)
 }
 
@@ -20,13 +20,13 @@ function deepSeekProviderPath(): string {
   )
 }
 
-function deepSeekTextRead(path: string): string {
+function readDeepSeekProviderFile(path: string): string {
   try {
     return fs.readFileSync(path, "utf8")
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     throw new Error(
-      `[readDeepSeekProvider] fail to read provider file: ${path}\n  ${message}`,
+      `[readDeepSeekProviderFile] fail to read provider file: ${path}\n  ${message}`,
     )
   }
 }
