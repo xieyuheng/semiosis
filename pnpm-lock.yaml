@@ -14,9 +14,6 @@ importers:
       '@xieyuheng/std.js':
         specifier: workspace:*
         version: link:../std.js
-      openai:
-        specifier: ^7.15.0
-        version: 7.15.0(zod@4.6.5)
       zod:
         specifier: ^4.6.5
         version: 4.6.5
@@ -184,30 +181,6 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  openai@7.15.0:
-    resolution: {integrity: sha512-2DIwesnPSduw68MFx7nAdgvshrgvS8WOan5W8+tgUMlAy/tY+Q41g80Pa+w/v64rHA6rtn+dketa8QvMVxU96w==}
-    engines: {node: '>=22.0.0'}
-    peerDependencies:
-      '@aws-sdk/credential-provider-node': '>=3.972.0 <4'
-      '@smithy/hash-node': '>=4.3.0 <5'
-      '@smithy/signature-v4': '>=5.4.0 <6'
-      undici: '>=5 <9'
-      ws: ^8.21.0
-      zod: ^3.25 || ^4.0
-    peerDependenciesMeta:
-      '@aws-sdk/credential-provider-node':
-        optional: true
-      '@smithy/hash-node':
-        optional: true
-      '@smithy/signature-v4':
-        optional: true
-      undici:
-        optional: true
-      ws:
-        optional: true
-      zod:
-        optional: true
-
   prettier@3.9.6:
     resolution: {integrity: sha512-OpN0zzVdiaiAhxpuuj5efpIS4sY9j7bY6uR5mnj5yPzGkdkjNKSJeUThPb60Jw29QuAZgA4o+/iB49kFiaBX6g==}
     engines: {node: '>=14'}
@@ -289,10 +262,6 @@ snapshots:
 
   '@typescript/typescript-win32-x64@7.0.2':
     optional: true
-
-  openai@7.15.0(zod@4.6.5):
-    optionalDependencies:
-      zod: 4.6.5
 
   prettier@3.9.6: {}
 
