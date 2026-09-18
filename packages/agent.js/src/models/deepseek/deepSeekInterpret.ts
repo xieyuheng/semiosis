@@ -1,38 +1,23 @@
-import { AssistantSign } from "../../sign/index.ts"
+import type {
+  DeepSeekChatCompletionInput,
+  DeepSeekClient,
+  DeepSeekMessage,
+  DeepSeekTool,
+} from "../../clients/deepseek/index.ts"
 import type { ModelInput, ModelOutput } from "../../model/index.ts"
+import { AssistantSign, type Sign } from "../../sign/index.ts"
 import type { ToolCall, ToolSpec } from "../../tool/index.ts"
-import type { Sign } from "../../sign/index.ts"
 import type { DeepSeekModelConfig } from "./DeepSeekModelConfig.ts"
-import type { DeepSeekProvider } from "./DeepSeekProvider.ts"
-
-type DeepSeekMessage = {
-  content?: string | null
-  reasoning_content?: string | null
-  tool_calls?: Array<DeepSeekToolCall>
-}
-
-type DeepSeekToolCall = {
-  id: string
-  function: {
-    name: string
-    arguments: string
-  }
-}
-
-type DeepSeekChatOutput = {
-  choices?: Array<{
-    message?: DeepSeekMessage
-  }>
-}
 
 export async function deepSeekInterpret(
-  provider: DeepSeekProvider,
+  client: DeepSeekClient,
   config: DeepSeekModelConfig,
   input: ModelInput,
 ): Promise<ModelOutput> {
-  const body: Record<string, unknown> = {
+  const request: DeepSeekChatCompletionInput = {
     model: config.name,
     messages: input.context.signs.map(makeDeepSeekMessage),
+    tools: input.tools.map(makeDeepSeekTool),
     thinking: {
       type: config.thinking,
     },
@@ -40,26 +25,7 @@ export async function deepSeekInterpret(
       config.thinking === "enabled" ? config.reasoningEffort : "none",
   }
 
-  if (input.tools.length !== 0) {
-    body.tools = input.tools.map(makeDeepSeekTool)
-  }
-
-  const response = await fetch(deepSeekInterpretUrl(provider.baseUrl), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${provider.key}`,
-    },
-    body: JSON.stringify(body),
-  })
-
-  const text = await response.text()
-
-  if (!response.ok) {
-    throw new Error(`[deepSeekInterpret] HTTP ${response.status}: ${text}`)
-  }
-
-  const output = JSON.parse(text) as DeepSeekChatOutput
+  const output = await client.chatCompletion(request)
   const message = output.choices?.[0]?.message
 
   if (message === undefined) {
@@ -71,18 +37,14 @@ export async function deepSeekInterpret(
   }
 }
 
-function deepSeekInterpretUrl(baseUrl: string): string {
-  return `${baseUrl.replace(/\/+$/, "")}/chat/completions`
-}
-
-function makeDeepSeekMessage(sign: Sign): Record<string, unknown> {
+function makeDeepSeekMessage(sign: Sign): DeepSeekMessage {
   switch (sign.kind) {
     case "SystemSign":
       return { role: "system", content: sign.content }
     case "UserSign":
       return { role: "user", content: sign.content }
     case "AssistantSign": {
-      const message: Record<string, unknown> = {
+      const message: DeepSeekMessage = {
         role: "assistant",
         content: sign.content,
       }
@@ -108,7 +70,7 @@ function makeDeepSeekMessage(sign: Sign): Record<string, unknown> {
   }
 }
 
-function makeDeepSeekTool(tool: ToolSpec): Record<string, unknown> {
+function makeDeepSeekTool(tool: ToolSpec): DeepSeekTool {
   return {
     type: "function",
     function: {
@@ -119,10 +81,10 @@ function makeDeepSeekTool(tool: ToolSpec): Record<string, unknown> {
   }
 }
 
-function makeDeepSeekToolCall(toolCall: ToolCall): Record<string, unknown> {
+function makeDeepSeekToolCall(toolCall: ToolCall) {
   return {
     id: toolCall.id,
-    type: "function",
+    type: "function" as const,
     function: {
       name: toolCall.name,
       arguments: toolCall.arguments,
