@@ -17,7 +17,7 @@ function deepSeekModelConfigPath(name: string): string {
 
   return Path.join(
     Os.homedir(),
-    ".semiosis",
+    ".windbell",
     "database",
     "models",
     "deepseek",

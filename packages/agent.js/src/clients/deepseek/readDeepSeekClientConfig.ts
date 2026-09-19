@@ -13,7 +13,7 @@ export function readDeepSeekClientConfig(): DeepSeekClientConfig {
 function deepSeekClientConfigPath(): string {
   return Path.join(
     Os.homedir(),
-    ".semiosis",
+    ".windbell",
     "database",
     "providers",
     "deepseek.json",

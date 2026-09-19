@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "license": "GPL-3.0-or-later",
   "type": "module",
-  "repository": "github:xieyuheng/semiosis",
+  "repository": "github:xieyuheng/windbell",
   "main": "src/index.ts",
   "files": [
     "src"
