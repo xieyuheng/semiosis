@@ -9,15 +9,18 @@ set -e
 ./scripts/run-in.sh std.js format.sh
 ./scripts/run-in.sh cli.js format.sh
 ./scripts/run-in.sh agent.js format.sh
+./scripts/run-in.sh fs-api.js format.sh
 
 # ts check
 
 ./scripts/run-in.sh std.js check.sh
 ./scripts/run-in.sh cli.js check.sh
 ./scripts/run-in.sh agent.js check.sh
+./scripts/run-in.sh fs-api.js check.sh
 
 # ts test
 
 ./scripts/run-in.sh std.js clean.sh test.sh
 ./scripts/run-in.sh cli.js clean.sh test.sh
 ./scripts/run-in.sh agent.js clean.sh test.sh
+./scripts/run-in.sh fs-api.js clean.sh test.sh
